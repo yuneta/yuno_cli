@@ -1298,31 +1298,6 @@ PRIVATE int display_webix_result(
         }
     }
 
-    if(result < 0) {
-        json_t *jn_error = json_local_sprintf("ERROR %d: %s", result, comment);
-        json_t *jn_text = json_pack("{s:o, s:s}",
-            "text", jn_error,
-            "bg_color", "red"
-        );
-        gobj_send_event(display_window, "EV_SETTEXT", jn_text, gobj);
-        // Pinta error en statusline, ya que no puedo pintar colores en la ventana-lista.
-        msg2statusline(gobj, result, "Be careful! Response with ERROR.");
-        if(priv->file_saving_output) {
-            fprintf(priv->file_saving_output, "ERROR %d: %s\n", result, comment);
-        }
-    } else {
-        if(!empty_string(comment)) {
-            json_t *jn_text = json_pack("{s:s}",
-                "text", comment
-            );
-            gobj_send_event(display_window, "EV_SETTEXT", jn_text, gobj);
-            if(priv->file_saving_output) {
-                fprintf(priv->file_saving_output, "%s\n", comment);
-            }
-        }
-        msg2statusline(gobj, 0, "");
-    }
-
     if(json_is_array(jn_data)) {
         if (mode_form) {
             { // XXX if(json_array_size(jn_data)>0) {
@@ -1379,6 +1354,31 @@ PRIVATE int display_webix_result(
             fprintf(priv->file_saving_output, "%s\n", data);
         }
         gbmem_free(data);
+    }
+
+    if(result < 0) {
+        json_t *jn_error = json_local_sprintf("ERROR %d: %s", result, comment);
+        json_t *jn_text = json_pack("{s:o, s:s}",
+            "text", jn_error,
+            "bg_color", "red"
+        );
+        gobj_send_event(display_window, "EV_SETTEXT", jn_text, gobj);
+        // Pinta error en statusline, ya que no puedo pintar colores en la ventana-lista.
+        msg2statusline(gobj, result, "Be careful! Response with ERROR.");
+        if(priv->file_saving_output) {
+            fprintf(priv->file_saving_output, "ERROR %d: %s\n", result, comment);
+        }
+    } else {
+        if(!empty_string(comment)) {
+            json_t *jn_text = json_pack("{s:s}",
+                "text", comment
+            );
+            gobj_send_event(display_window, "EV_SETTEXT", jn_text, gobj);
+            if(priv->file_saving_output) {
+                fprintf(priv->file_saving_output, "%s\n", comment);
+            }
+        }
+        msg2statusline(gobj, 0, "");
     }
 
     if(priv->file_saving_output) {
