@@ -94,7 +94,7 @@ TARGET_LINK_LIBRARIES(yuneta
     /yuneta/development/output/lib/libpanel.a
     /yuneta/development/output/lib/libncurses.a
 
-    pthread     # used by libuv
+    pthread dl  # used by libuv
     lzma        # used by libunwind
 
 )
@@ -110,7 +110,7 @@ TARGET_LINK_LIBRARIES(yuneta
     /yuneta/development/output/lib/libpanel.a
     /yuneta/development/output/lib/libncurses.a
 
-    pthread     # used by libuv
+    pthread dl  # used by libuv
     lzma        # used by libunwind
 
 )
