@@ -1260,6 +1260,10 @@ PRIVATE GBUFFER *jsontable2str(json_t *jn_schema, json_t *jn_data)
         json_array_foreach(jn_schema, col, jn_col) {
             const char *id = kw_get_str(jn_col, "id", 0, 0);
             int fillspace = kw_get_int(jn_col, "fillspace", 10, 0);
+            const char *header = kw_get_str(jn_col, "header", "", 0);
+            if(fillspace && fillspace < strlen(header)) {
+                fillspace = strlen(header);
+            }
             if(fillspace > 0) {
                 json_t *jn_cell = kw_get_dict_value(jn_row, id, 0, 0);
                 char *text = json2uglystr(jn_cell);
