@@ -2203,6 +2203,22 @@ PRIVATE int ac_edit_config(hgobj gobj, const char *event, json_t *kw, hgobj src)
         );
     }
 
+    const char *id = kw_get_str(record, "id", 0, 0);
+    if(!id) {
+        return display_webix_result(
+            gobj,
+            wn_display,
+            msg_iev_build_webix(
+                gobj,
+                -1,
+                json_local_sprintf("Internal error, no id"),
+                0,
+                0,
+                kw  // owned
+            )
+        );
+    }
+
     json_t *jn_content = kw_get_dict_value(record, "zcontent", 0, 0);
     if(!jn_content) {
         return display_webix_result(
@@ -2262,8 +2278,9 @@ PRIVATE int ac_edit_config(hgobj gobj, const char *event, json_t *kw, hgobj src)
     }
     char upgrade_command[512];
     snprintf(upgrade_command, sizeof(upgrade_command),
-        "upgrade-config name=%s version='%s' description='%s' content64=$$(%s) ",
+        "create-config %s id='%s' version='%s' description='%s' content64=$$(%s) ",
         name,
+        id,
         new_version,
         description,
         path
