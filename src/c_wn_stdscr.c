@@ -127,7 +127,7 @@ PRIVATE void mt_create(hgobj gobj)
     /*
      *  stdscr timer to detect window size change
      */
-    priv->timer = gobj_create("wn_stdscr", GCLASS_TIMER, 0, gobj);
+    priv->timer = gobj_create("", GCLASS_TIMER, 0, gobj);
 
 #ifndef TEST_KDEVELOP
     priv->wn = initscr();               /* Start curses mode            */

@@ -227,7 +227,7 @@ PRIVATE void mt_create(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    priv->timer = gobj_create("cli", GCLASS_TIMER, 0, gobj);
+    priv->timer = gobj_create("", GCLASS_TIMER, 0, gobj);
     priv->jn_shortkeys = gobj_read_json_attr(gobj, "shortkeys");
     if(!priv->jn_shortkeys) {
         json_t *jn_dict = json_object();
