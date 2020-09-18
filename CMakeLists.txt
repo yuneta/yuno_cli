@@ -95,7 +95,7 @@ TARGET_LINK_LIBRARIES(yuneta
 
     pthread dl  # used by libuv
     lzma        # used by libunwind
-
+    uuid
 )
 
 
