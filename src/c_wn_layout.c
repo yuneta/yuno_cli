@@ -605,7 +605,7 @@ PRIVATE LMETHOD lmt[] = {
  *---------------------------------------------*/
 PRIVATE GCLASS _gclass = {
     0,  // base
-    GCLASS_WN_LAYOUT_NAME,      // CHANGE WITH each gclass
+    GCLASS_WN_LAYOUT_NAME,
     &fsm,
     {
         mt_create,
