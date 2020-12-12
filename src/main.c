@@ -131,6 +131,25 @@ int main(int argc, char *argv[])
     gbmem_trace_alloc_free(0, mem_list);
 #endif
 
+    /*
+     *  Estas trazas siempre en el cli.
+     */
+    gobj_set_gclass_trace(GCLASS_IEVENT_SRV, "identity-card", TRUE);
+    gobj_set_gclass_trace(GCLASS_IEVENT_CLI, "identity-card", TRUE);
+
+    if(argv[1]) {
+        if(strcmp(argv[1], "verbose2")==0) {
+            gobj_set_gobj_trace(0, "machine", TRUE, 0);
+            gobj_set_gobj_trace(0, "ev_kw", TRUE, 0);
+            gobj_set_gobj_trace(0, "subscriptions", TRUE, 0);
+            argc = 1;
+        } else if(strcmp(argv[1], "verbose")==0) {
+            gobj_set_gobj_trace(0, "ev_kw", TRUE, 0);
+            gobj_set_gobj_trace(0, "subscriptions", TRUE, 0);
+            argc = 1;
+        }
+    }
+
 //     gobj_set_gclass_trace(GCLASS_CLI, "machine", TRUE);
 //     gobj_set_gclass_trace(GCLASS_CLI, "ev_kw", TRUE);
 //     gobj_set_gclass_trace(GCLASS_IEVENT_CLI, "machine", TRUE);
@@ -159,7 +178,7 @@ int main(int argc, char *argv[])
 
 //     gobj_set_gobj_trace(0, "machine", TRUE, 0);
 //     gobj_set_gobj_trace(0, "ev_kw", TRUE, 0);
-//    gobj_set_gobj_trace(0, "create_delete", TRUE, 0);
+//     gobj_set_gobj_trace(0, "create_delete", TRUE, 0);
 //     gobj_set_gobj_trace(0, "start_stop", TRUE, 0);
 //     gobj_set_gobj_trace(0, "subscriptions", TRUE, 0);
 
