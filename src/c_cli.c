@@ -1957,7 +1957,7 @@ PRIVATE int ac_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
         }
         json_t *webix;
         if(gobj_cmd) {
-            webix = gobj_command(gobj_cmd, xcmd, kw_command, wn_display);
+            webix = gobj_command(gobj_cmd, xcmd, kw_command, gobj);
         } else {
             webix = msg_iev_build_webix(
                 gobj,
