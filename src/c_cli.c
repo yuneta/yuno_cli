@@ -353,6 +353,7 @@ PRIVATE char agent_filter_chain_config[]= "\
 {                                               \n\
     'name': '(^^__url__^^)',                    \n\
     'gclass': 'IEvent_cli',                     \n\
+    'as_unique': true,                          \n\
     'kw': {                                     \n\
         'remote_yuno_name': '(^^__yuno_name__^^)',      \n\
         'remote_yuno_role': '(^^__yuno_role__^^)',      \n\
@@ -2584,13 +2585,13 @@ PRIVATE const EVENT input_events[] = {
     {"EV_NEXT_WINDOW",              0, 0, 0},
     {"EV_ON_OPEN",                  0, 0, 0},
     {"EV_ON_CLOSE",                 0, 0, 0},
-    {"EV_EDIT_CONFIG",              0, 0, 0},
-    {"EV_VIEW_CONFIG",              0, 0, 0},
-    {"EV_EDIT_YUNO_CONFIG",         0, 0, 0},
-    {"EV_VIEW_YUNO_CONFIG",         0, 0, 0},
-    {"EV_READ_JSON",                0, 0, 0},
-    {"EV_READ_FILE",                0, 0, 0},
-    {"EV_READ_BINARY_FILE",         0, 0, 0},
+    {"EV_EDIT_CONFIG",              EVF_PUBLIC_EVENT, 0, 0},
+    {"EV_VIEW_CONFIG",              EVF_PUBLIC_EVENT, 0, 0},
+    {"EV_EDIT_YUNO_CONFIG",         EVF_PUBLIC_EVENT, 0, 0},
+    {"EV_VIEW_YUNO_CONFIG",         EVF_PUBLIC_EVENT, 0, 0},
+    {"EV_READ_JSON",                EVF_PUBLIC_EVENT, 0, 0},
+    {"EV_READ_FILE",                EVF_PUBLIC_EVENT, 0, 0},
+    {"EV_READ_BINARY_FILE",         EVF_PUBLIC_EVENT, 0, 0},
 
     {"EV_MT_STATS_ANSWER",          EVF_PUBLIC_EVENT, 0, 0},
     {"EV_MT_COMMAND_ANSWER",        EVF_PUBLIC_EVENT, 0, 0},
