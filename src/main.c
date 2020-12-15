@@ -16,7 +16,7 @@
 #define APP_NAME        "yuneta"
 #define APP_DOC         "Yuneta Command Line Interface"
 
-#define APP_VERSION     "4.3.1"
+#define APP_VERSION     "4.3.2"
 #define APP_DATETIME    __DATE__ " " __TIME__
 #define APP_SUPPORT     "<niyamaka at yuneta.io>"
 
@@ -204,12 +204,12 @@ int main(int argc, char *argv[])
     helper_quote2doublequote(fixed_config);
     helper_quote2doublequote(variable_config);
     yuneta_setup(
-        0,
-        0,
-        db_load_persistent_attrs,   // dbsimple.c
-        db_save_persistent_attrs,   // dbsimple.c
-        db_remove_persistent_attrs, // dbsimple.c
-        db_list_persistent_attrs,   // dbsimple.c
+        dbattrs_startup,
+        dbattrs_end,
+        dbattrs_load_persistent,
+        dbattrs_save_persistent,
+        dbattrs_remove_persistent,
+        dbattrs_list_persistent,
         command_parser,
         stats_parser,
         0,
