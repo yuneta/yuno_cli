@@ -210,8 +210,6 @@ int main(int argc, char *argv[])
         dbattrs_save_persistent,
         dbattrs_remove_persistent,
         dbattrs_list_persistent,
-        command_parser,
-        stats_parser,
         0,
         0,
         0,
