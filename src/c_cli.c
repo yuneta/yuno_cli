@@ -2235,11 +2235,10 @@ PRIVATE int ac_edit_config(hgobj gobj, const char *event, json_t *kw, hgobj src)
             )
         );
     }
-    const char *name = kw_get_str(record, "name", "__temporal__", 0);
     JSON_INCREF(jn_content);
     char path[NAME_MAX];
 
-    save_local_json(gobj, path, sizeof(path), name, jn_content);
+    save_local_json(gobj, path, sizeof(path), id, jn_content);
     //log_debug_printf("save_local_json %s", path);
     edit_json(gobj, path);
 
@@ -2267,23 +2266,10 @@ PRIVATE int ac_edit_config(hgobj gobj, const char *event, json_t *kw, hgobj src)
     }
     JSON_DECREF(jn_new_content);
 
-    const char *description = kw_get_str(record, "description", "", 0);
-    const char *version = kw_get_str(record, "version", "", 0);
-    char new_version[80];
-    int iversion = atoi(version);
-    if(iversion) {
-        iversion++;
-        snprintf(new_version, sizeof(new_version), "%d", iversion);
-    } else {
-        snprintf(new_version, sizeof(new_version), "%s", version);
-    }
     char upgrade_command[512];
     snprintf(upgrade_command, sizeof(upgrade_command),
-        "create-config %s id='%s' version='%s' description='%s' content64=$$(%s) ",
-        name,
+        "create-config id='%s' content64=$$(%s) ",
         id,
-        new_version,
-        description,
         path
     );
 
