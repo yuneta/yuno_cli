@@ -31,7 +31,7 @@ PRIVATE char fixed_config[]= "\
     },                                                              \n\
     'yuno': {                                                       \n\
         'yuno_role': 'yuneta',                                      \n\
-        'classifiers': ['yuneta', 'core']                           \n\
+        'tags': ['yuneta', 'core']                                  \n\
     }                                                               \n\
 }                                                                   \n\
 ";
