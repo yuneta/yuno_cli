@@ -16,7 +16,7 @@
 #define APP_NAME        "yuneta"
 #define APP_DOC         "Yuneta Command Line Interface"
 
-#define APP_VERSION     "4.6.4"
+#define APP_VERSION     "4.6.5"
 #define APP_DATETIME    __DATE__ " " __TIME__
 #define APP_SUPPORT     "<niyamaka at yuneta.io>"
 
@@ -26,6 +26,7 @@
 PRIVATE char fixed_config[]= "\
 {                                                                   \n\
     'environment': {                                                \n\
+        'realm_owner': 'agent',                                     \n\
         'work_dir': '/yuneta',                                      \n\
         'domain_dir': 'realms/agent/cli'                            \n\
     },                                                              \n\
