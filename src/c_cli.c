@@ -1670,7 +1670,11 @@ PRIVATE int save_local_json(hgobj gobj, char *path, int pathsize, const char *na
     if(access(path, 0)!=0) {
         mkrdir(path, 0, 0700);
     }
-    snprintf(path, pathsize, "%s/.yuneta/configs/%s.json", homedir, name);
+    if(strlen(name) > 5 && strstr(name + strlen(name) - strlen(".json"), ".json")) {
+        snprintf(path, pathsize, "%s/.yuneta/configs/%s", homedir, name);
+    } else {
+        snprintf(path, pathsize, "%s/.yuneta/configs/%s.json", homedir, name);
+    }
     json_dump_file(jn_content, path, JSON_ENCODE_ANY | JSON_INDENT(4));
     JSON_DECREF(jn_content);
     return 0;
