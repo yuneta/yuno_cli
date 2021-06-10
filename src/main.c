@@ -70,7 +70,7 @@ PRIVATE char variable_config[]= "\
             },                                                      \n\
             'to_file': {                                            \n\
                 'handler_type': 'file',                             \n\
-                'filename_mask': 'yuneta_cli-MM-DD.log',            \n\
+                'filename_mask': 'yuneta_cli-W.log',            \n\
                 'handler_options': 255                              \n\
             }                                                       \n\
         }                                                           \n\

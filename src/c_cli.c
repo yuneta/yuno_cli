@@ -170,7 +170,7 @@ SDATA_END()
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag------------------------default---------description---------- */
 SDATA (ASN_OCTET_STR,   "display_mode",     SDF_WR|SDF_PERSIST,         "table",        "Display mode: table or form"),
-SDATA (ASN_OCTET_STR,   "editor",           SDF_WR|SDF_PERSIST,         "kate",         "Editor"),
+SDATA (ASN_OCTET_STR,   "editor",           SDF_WR|SDF_PERSIST,         "vim",          "Editor"),
 SDATA (ASN_JSON,        "shortkeys",        SDF_WR|SDF_PERSIST,         0,              "Shortkeys. A dict {key: command}."),
 SDATA (ASN_BOOLEAN,     "batch",            0,                          0,              "In batch mode don't use framework. For testing."),
 SDATA (ASN_POINTER,     "user_data",        0,                          0,              "user data"),
