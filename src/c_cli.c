@@ -349,7 +349,7 @@ PRIVATE int mt_inject_event(hgobj gobj, const char *event, json_t *kw, hgobj src
 
 
 
-PRIVATE char agent_filter_chain_config[]= "\
+PRIVATE char agent_insecure_config[]= "\
 {                                               \n\
     'name': '(^^__url__^^)',                    \n\
     'gclass': 'IEvent_cli',                     \n\
@@ -375,13 +375,17 @@ PRIVATE char agent_filter_chain_config[]= "\
                         {                                               \n\
                             'name': '(^^__url__^^)',                    \n\
                             'gclass': 'GWebSocket',                     \n\
-                            'kw': {                                     \n\
-                                'kw_connex': {                          \n\
-                                    'urls':[                            \n\
-                                        '(^^__url__^^)'                 \n\
-                                    ]                                   \n\
+                            'zchilds': [                                \n\
+                                {                                       \n\
+                                    'name': '(^^__url__^^)',            \n\
+                                    'gclass': 'Connex',                 \n\
+                                    'kw': {                             \n\
+                                        'urls':[                        \n\
+                                            '(^^__url__^^)'             \n\
+                                        ]                               \n\
+                                    }                                   \n\
                                 }                                       \n\
-                            }                                           \n\
+                            ]                                           \n\
                         }                                               \n\
                     ]                                           \n\
                 }                                               \n\
@@ -391,6 +395,55 @@ PRIVATE char agent_filter_chain_config[]= "\
 }                                               \n\
 ";
 
+PRIVATE char agent_secure_config[]= "\
+{                                               \n\
+    'name': '(^^__url__^^)',                    \n\
+    'gclass': 'IEvent_cli',                     \n\
+    'as_unique': true,                          \n\
+    'kw': {                                     \n\
+        'remote_yuno_name': '(^^__yuno_name__^^)',      \n\
+        'remote_yuno_role': '(^^__yuno_role__^^)',      \n\
+        'remote_yuno_service': '(^^__yuno_service__^^)' \n\
+    },                                          \n\
+    'zchilds': [                                 \n\
+        {                                               \n\
+            'name': '(^^__url__^^)',                    \n\
+            'gclass': 'IOGate',                         \n\
+            'kw': {                                     \n\
+            },                                          \n\
+            'zchilds': [                                 \n\
+                {                                               \n\
+                    'name': '(^^__url__^^)',                    \n\
+                    'gclass': 'Channel',                        \n\
+                    'kw': {                                     \n\
+                    },                                          \n\
+                    'zchilds': [                                 \n\
+                        {                                               \n\
+                            'name': '(^^__url__^^)',                    \n\
+                            'gclass': 'GWebSocket',                     \n\
+                            'zchilds': [                                \n\
+                                {                                       \n\
+                                    'name': '(^^__url__^^)',            \n\
+                                    'gclass': 'Connexs',                \n\
+                                    'kw': {                             \n\
+                                        'crypto': {                     \n\
+                                            'library': 'openssl',       \n\
+                                            'trace': false              \n\
+                                        },                              \n\
+                                        'urls':[                        \n\
+                                            '(^^__url__^^)'             \n\
+                                        ]                               \n\
+                                    }                                   \n\
+                                }                                       \n\
+                            ]                                           \n\
+                        }                                               \n\
+                    ]                                           \n\
+                }                                               \n\
+            ]                                           \n\
+        }                                               \n\
+    ]                                           \n\
+}                                               \n\
+";
 
 /***************************************************************************
  *
@@ -421,9 +474,17 @@ PRIVATE json_t *cmd_connect(hgobj gobj, const char *command, json_t *kw, hgobj s
     char *sjson_config_variables = json2str(jn_config_variables);
     JSON_DECREF(jn_config_variables);
 
+    char schema[20]={0}, host[120]={0}, port[40]={0};
+    parse_http_url(url, schema, sizeof(schema), host, sizeof(host), port, sizeof(port), FALSE);
+
+    char *agent_config = agent_insecure_config;
+    if(strcmp(schema, "wss")==0) {
+        agent_config = agent_secure_config;
+    }
+
     hgobj gobj_remote_agent = gobj_create_tree(
         gobj,
-        agent_filter_chain_config,
+        agent_config,
         sjson_config_variables,
         "EV_ON_SETUP",
         "EV_ON_SETUP_COMPLETE"

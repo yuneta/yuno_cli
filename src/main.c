@@ -5,7 +5,7 @@
  *          Copyright (c) 2014,2015 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-#include <yuneta.h>
+#include <yuneta_tls.h>
 #include "c_cli.h"
 #include "c_wn_stdscr.h"
 #include "yuno_yuneta_cli.h"
@@ -109,6 +109,11 @@ PRIVATE char variable_config[]= "\
  ***************************************************************************/
 static void register_yuno_and_more(void)
 {
+    /*------------------------*
+     *  Register yuneta-tls
+     *------------------------*/
+    yuneta_register_c_tls();
+
     /*-------------------*
      *  Register yuno
      *-------------------*/
