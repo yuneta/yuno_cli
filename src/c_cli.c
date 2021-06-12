@@ -474,6 +474,9 @@ PRIVATE json_t *cmd_connect(hgobj gobj, const char *command, json_t *kw, hgobj s
     char *sjson_config_variables = json2str(jn_config_variables);
     JSON_DECREF(jn_config_variables);
 
+    /*
+     *  Get schema to select tls or not
+     */
     char schema[20]={0}, host[120]={0}, port[40]={0};
     parse_http_url(url, schema, sizeof(schema), host, sizeof(host), port, sizeof(port), FALSE);
 
@@ -2613,7 +2616,7 @@ PRIVATE int ac_agent_response(hgobj gobj, const char *event, json_t *kw, hgobj s
 PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
 #ifdef TEST_KDEVELOP_KB
-        char msg[] = "l\n";
+        char msg[] = "c\n";
         for(int i=0; i<strlen(msg); i++) {
             process_key(gobj, msg[i]);
         }

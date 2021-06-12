@@ -15,8 +15,10 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99")
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   add_definitions(-DDEBUG)
 
+  # TEST para probar en kdevelop
 #   add_definitions(-DTEST_KDEVELOP)
 #   add_definitions(-DTEST_KDEVELOP_KB)
+  # TEST para probar en kdevelop
 
   option(SHOWNOTES "Show preprocessor notes" OFF)
 
