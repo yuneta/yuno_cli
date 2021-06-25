@@ -669,7 +669,7 @@ PRIVATE json_t *cmd_display_mode(hgobj gobj, const char *command, json_t *kw, hg
     if(!empty_string(display_mode)) {
         if(str_in_list(_mode, display_mode, TRUE)) {
             gobj_write_str_attr(gobj, "display_mode", display_mode);
-            gobj_save_persistent_attrs(gobj);
+            gobj_save_persistent_attrs(gobj, json_string("display_mode"));
         }
     }
 
@@ -693,7 +693,7 @@ PRIVATE json_t *cmd_editor(hgobj gobj, const char *command, json_t *kw, hgobj sr
     const char *editor = kw_get_str(kw, "editor", "", 0);
     if(!empty_string(editor)) {
         gobj_write_str_attr(gobj, "editor", editor);
-        gobj_save_persistent_attrs(gobj);
+        gobj_save_persistent_attrs(gobj, json_string("editor"));
     }
 
     editor = gobj_read_str_attr(gobj, "editor");
@@ -824,7 +824,7 @@ PRIVATE json_t *cmd_add_shortkey(hgobj gobj, const char *cmd, json_t *kw, hgobj 
     }
 
     json_object_set(priv->jn_shortkeys, key, json_string(command));
-    gobj_save_persistent_attrs(gobj);
+    gobj_save_persistent_attrs(gobj,0);
 
     return msg_iev_build_webix(
         gobj,
@@ -877,7 +877,7 @@ PRIVATE json_t *cmd_remove_shortkey(hgobj gobj, const char *cmd, json_t *kw, hgo
     } else {
         json_object_del(priv->jn_shortkeys, key);
     }
-    gobj_save_persistent_attrs(gobj);
+    gobj_save_persistent_attrs(gobj, 0);
 
     return msg_iev_build_webix(
         gobj,
