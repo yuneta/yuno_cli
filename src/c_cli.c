@@ -1455,6 +1455,15 @@ PRIVATE int display_webix_result(
             fprintf(priv->file_saving_output, "%s\n", data);
         }
         gbmem_free(data);
+    } else if(json_is_string(jn_data)) {
+        const char *data = json_string_value(jn_data);
+        json_t *jn_text = json_pack("{s:s}",
+            "text", data
+        );
+        gobj_send_event(display_window, "EV_SETTEXT", jn_text, gobj);
+        if(priv->file_saving_output) {
+            fprintf(priv->file_saving_output, "%s\n", data);
+        }
     }
 
     if(priv->file_saving_output) {
