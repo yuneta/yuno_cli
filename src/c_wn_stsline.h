@@ -5,8 +5,7 @@
  *          Copyright (c) 2016 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-#ifndef _C_WN_STSLINE_H
-#define _C_WN_STSLINE_H 1
+#pragma once
 
 #include <yuneta.h>
 #include "c_wn_stdscr.h"
@@ -71,6 +70,4 @@ PUBLIC GCLASS *gclass_wn_stsline(void);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

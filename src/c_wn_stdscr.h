@@ -33,8 +33,7 @@
  *          Copyright (c) 2015-2016 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-#ifndef _C_WN_STDSCR_H
-#define _C_WN_STDSCR_H 1
+#pragma once
 
 #include <yuneta.h>
 
@@ -156,6 +155,4 @@ PUBLIC int EnableWindow(hgobj gobj, BOOL enable);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

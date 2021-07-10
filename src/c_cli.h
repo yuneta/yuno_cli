@@ -7,8 +7,7 @@
  *          Copyright (c) 2015 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-#ifndef _C_CLI_H
-#define _C_CLI_H 1
+#pragma once
 
 #include <yuneta.h>
 #include "c_wn_stdscr.h"
@@ -80,6 +79,4 @@ PUBLIC GCLASS *gclass_cli(void);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

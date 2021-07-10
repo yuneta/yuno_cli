@@ -5,9 +5,7 @@
  *          Copyright (c) 2014 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _YUNO_YUNETA_CLI_H
-#define _YUNO_YUNETA_CLI_H 1
+#pragma once
 
 #include <yuneta.h>
 
@@ -27,7 +25,4 @@ PUBLIC void register_yuno_yuneta_cli(void);
 
 #ifdef __cplusplus
 }
-#endif
-
-
 #endif
