@@ -46,7 +46,7 @@ endif(HAVE_REGEX_H)
 #     message("***  WARNING: GNU C ncurses library not found.")
 # endif(HAVE_NCURSES_H)
 
-include_directories(BEFORE /yuneta/development/output/include)
+include_directories(/yuneta/development/output/include)
 
 ##############################################
 #   Source
