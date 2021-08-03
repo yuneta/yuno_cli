@@ -16,7 +16,7 @@
 #define APP_NAME        "yuneta"
 #define APP_DOC         "Yuneta Command Line Interface"
 
-#define APP_VERSION     "4.15.6"
+#define APP_VERSION     "4.15.7"
 #define APP_DATETIME    __DATE__ " " __TIME__
 #define APP_SUPPORT     "<niyamaka at yuneta.io>"
 
@@ -86,7 +86,8 @@ PRIVATE char variable_config[]= "\
             's': 'stats-yuno yuno_role=logcenter',                              \n\
             'ss': 'command-yuno yuno_role=logcenter command=display-summary',   \n\
             'r': 'command-yuno yuno_role=logcenter command=reset-counters',     \n\
-            'tt': 't yuno_running=1'                                            \n\
+            'tt': 't yuno_running=1',                                           \n\
+            'control': 'c url=wss://127.0.0.1:1911 yuno_role=controlcenter service=controlcenter' \n\
         }                                                                       \n\
     },                                                              \n\
     'services': [                                                   \n\
