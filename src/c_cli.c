@@ -169,6 +169,7 @@ SDATA_END()
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag------------------------default---------description---------- */
+SDATA (ASN_OCTET_STR,   "jwt",              0,          "",             "Jwt"),
 SDATA (ASN_OCTET_STR,   "display_mode",     SDF_WR|SDF_PERSIST,         "table",        "Display mode: table or form"),
 SDATA (ASN_OCTET_STR,   "editor",           SDF_WR|SDF_PERSIST,         "vim",          "Editor"),
 SDATA (ASN_JSON,        "shortkeys",        SDF_WR|SDF_PERSIST,         0,              "Shortkeys. A dict {key: command}."),
@@ -401,6 +402,7 @@ PRIVATE char agent_secure_config[]= "\
     'gclass': 'IEvent_cli',                     \n\
     'as_unique': true,                          \n\
     'kw': {                                     \n\
+        'jwt': '(^^__jwt__^^)',                         \n\
         'remote_yuno_name': '(^^__yuno_name__^^)',      \n\
         'remote_yuno_role': '(^^__yuno_role__^^)',      \n\
         'remote_yuno_service': '(^^__yuno_service__^^)' \n\
@@ -456,6 +458,7 @@ PRIVATE json_t *cmd_connect(hgobj gobj, const char *command, json_t *kw, hgobj s
         snprintf(_url, sizeof(_url), "ws://%s:1991", url); // TODO saca el puerto 1991 a configuración
         url = _url;
     }
+    const char *jwt = gobj_read_str_attr(gobj, "jwt");
     const char *yuno_name = kw_get_str(kw, "yuno_name", "", 0);
     const char *yuno_role = kw_get_str(kw, "yuno_role", "", 0);
     const char *yuno_service = kw_get_str(kw, "service", "", 0);
@@ -464,8 +467,9 @@ PRIVATE json_t *cmd_connect(hgobj gobj, const char *command, json_t *kw, hgobj s
      *  Each display window has a gobj to send the commands (saved in user_data).
      *  For external agents create a filter-chain of gobjs
      */
-    json_t * jn_config_variables = json_pack("{s:{s:s, s:s, s:s, s:s}}",
+    json_t * jn_config_variables = json_pack("{s:{s:s, s:s, s:s, s:s, s:s}}",
         "__json_config_variables__",
+            "__jwt__", jwt,
             "__url__", url,
             "__yuno_name__", yuno_name,
             "__yuno_role__", yuno_role,
