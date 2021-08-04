@@ -37,17 +37,6 @@ PRIVATE char fixed_config[]= "\
 }                                                                   \n\
 ";
 
-/*
-        'MEM_MIN_BLOCK': 64,                                        \n\
-        'MEM_MAX_BLOCK': 262144,            #^^ 256*K               \n\
-        'MEM_SUPERBLOCK': 524288,           #^^ 512*K               \n\
-        'MEM_MAX_SYSTEM_MEMORY': 67108864,  #^^ 64*M                \n\
-
-        'MEM_MIN_BLOCK': 1024,                                      \n\
-        'MEM_MAX_BLOCK': 52428800,              #^^  50*M           \n\
-        'MEM_SUPERBLOCK': 52428800,             #^^  50*M           \n\
-        'MEM_MAX_SYSTEM_MEMORY': 209715200,     #^^ 200*M           \n\
-*/
 PRIVATE char variable_config[]= "\
 {                                                                   \n\
     '__json_config_variables__': {                                  \n\

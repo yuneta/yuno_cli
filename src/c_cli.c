@@ -453,11 +453,6 @@ PRIVATE char agent_secure_config[]= "\
 PRIVATE json_t *cmd_connect(hgobj gobj, const char *command, json_t *kw, hgobj src)
 {
     const char *url = kw_get_str(kw, "url", "", 0);
-    char _url[128];
-    if(!strchr(url, ':')) {
-        snprintf(_url, sizeof(_url), "ws://%s:1991", url); // TODO saca el puerto 1991 a configuración
-        url = _url;
-    }
     const char *jwt = gobj_read_str_attr(gobj, "jwt");
     const char *yuno_name = kw_get_str(kw, "yuno_name", "", 0);
     const char *yuno_role = kw_get_str(kw, "yuno_role", "", 0);
