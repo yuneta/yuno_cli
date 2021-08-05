@@ -9,7 +9,7 @@
  ****************************************************************************/
 #pragma once
 
-#include <yuneta.h>
+#include <yuneta_tls.h>
 #include "c_wn_stdscr.h"
 #include "c_wn_layout.h"
 #include "c_wn_box.h"
