@@ -169,8 +169,8 @@ SDATA_END()
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag------------------------default---------description---------- */
-SDATA (ASN_OCTET_STR,   "token_endpoint",   SDF_WR|SDF_PERSIST,         "",             "OAuth2 Token EndPoint (get now a jwt)"),
-SDATA (ASN_OCTET_STR,   "user_id",          SDF_WR|SDF_PERSIST,         "",             "OAuth2 User Id (get now a jwt)"),
+SDATA (ASN_OCTET_STR,   "token_endpoint",   SDF_WR|SDF_PERSIST,         "",             "OAuth2 Token EndPoint (interactive jwt)"),
+SDATA (ASN_OCTET_STR,   "user_id",          SDF_WR|SDF_PERSIST,         "",             "OAuth2 User Id (interactive jwt)"),
 SDATA (ASN_OCTET_STR,   "jwt",              0,                          "",             "Jwt"),
 SDATA (ASN_OCTET_STR,   "display_mode",     SDF_WR|SDF_PERSIST,         "table",        "Display mode: table or form"),
 SDATA (ASN_OCTET_STR,   "editor",           SDF_WR|SDF_PERSIST,         "vim",          "Editor"),
