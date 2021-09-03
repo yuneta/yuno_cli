@@ -170,6 +170,7 @@ SDATA_END()
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag--------------------default---------description---------- */
 SDATA (ASN_OCTET_STR,   "token_endpoint",   0,                      "",         "OAuth2 Token EndPoint (interactive jwt)"),
+SDATA (ASN_OCTET_STR,   "realm_name",       0,                      "",         "Remote realm name (used for Authorized Party, 'azp' field of jwt)."),
 SDATA (ASN_OCTET_STR,   "user_id",          0,                      "",         "OAuth2 User Id (interactive jwt)"),
 SDATA (ASN_OCTET_STR,   "user_passw",       0,                      "",         "OAuth2 User Password (interactive jwt)"),
 SDATA (ASN_OCTET_STR,   "client_id",        0,                      "",         "OAuth2 client id (azp - authorized party ) (interactive jwt)"),
