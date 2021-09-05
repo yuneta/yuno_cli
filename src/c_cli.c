@@ -168,19 +168,20 @@ SDATA_END()
  *      Attributes - order affect to oid's
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
-/*-ATTR-type------------name----------------flag--------------------default---------description---------- */
-SDATA (ASN_OCTET_STR,   "token_endpoint",   0,                      "",         "OAuth2 Token EndPoint (interactive jwt)"),
-SDATA (ASN_OCTET_STR,   "realm_name",       0,                      "",         "Remote realm name (used for Authorized Party, 'azp' field of jwt)."),
-SDATA (ASN_OCTET_STR,   "user_id",          0,                      "",         "OAuth2 User Id (interactive jwt)"),
-SDATA (ASN_OCTET_STR,   "user_passw",       0,                      "",         "OAuth2 User Password (interactive jwt)"),
-SDATA (ASN_OCTET_STR,   "client_id",        0,                      "",         "OAuth2 client id (azp - authorized party ) (interactive jwt)"),
-SDATA (ASN_OCTET_STR,   "jwt",              0,                      "",         "Jwt"),
-SDATA (ASN_OCTET_STR,   "display_mode",     SDF_WR|SDF_PERSIST,     "table",    "Display mode: table or form"),
-SDATA (ASN_OCTET_STR,   "editor",           SDF_WR|SDF_PERSIST,     "vim",      "Editor"),
-SDATA (ASN_JSON,        "shortkeys",        SDF_WR|SDF_PERSIST,     0,          "Shortkeys. A dict {key: command}."),
-SDATA (ASN_BOOLEAN,     "batch",            0,                      0,          "In batch mode don't use framework. For testing."),
-SDATA (ASN_POINTER,     "user_data",        0,                      0,          "user data"),
-SDATA (ASN_POINTER,     "user_data2",       0,                      0,          "more user data"),
+/*-ATTR-type------------name----------------flag----------------default-----description---------- */
+SDATA (ASN_OCTET_STR,   "auth_system",      0,                  "keycloak", "OAuth2 System (interactive jwt)"),
+SDATA (ASN_OCTET_STR,   "auth_url",         0,                  "",         "OAuth2 Server Url (interactive jwt)"),
+SDATA (ASN_OCTET_STR,   "auth_owner",       0,                  "",         "OAuth2 Owner (interactive jwt)"),
+SDATA (ASN_OCTET_STR,   "realm_name",       0,                  "",         "Remote realm name (used for Authorized Party, 'azp' field of jwt)."),
+SDATA (ASN_OCTET_STR,   "user_id",          0,                  "",         "OAuth2 User Id (get now a jwt)"),
+SDATA (ASN_OCTET_STR,   "user_passw",       0,                  "",         "OAuth2 User Password (get now a jwt)"),
+SDATA (ASN_OCTET_STR,   "jwt",              0,                  "",         "Jwt"),
+SDATA (ASN_OCTET_STR,   "display_mode",     SDF_WR|SDF_PERSIST, "table",    "Display mode: table or form"),
+SDATA (ASN_OCTET_STR,   "editor",           SDF_WR|SDF_PERSIST, "vim",      "Editor"),
+SDATA (ASN_JSON,        "shortkeys",        SDF_WR|SDF_PERSIST, 0,          "Shortkeys. A dict {key: command}."),
+SDATA (ASN_BOOLEAN,     "batch",            0,                  0,          "In batch mode don't use framework. For testing."),
+SDATA (ASN_POINTER,     "user_data",        0,                  0,          "user data"),
+SDATA (ASN_POINTER,     "user_data2",       0,                  0,          "more user data"),
 SDATA_END()
 };
 
