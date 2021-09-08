@@ -172,7 +172,7 @@ PRIVATE sdata_desc_t tattr_desc[] = {
 SDATA (ASN_OCTET_STR,   "auth_system",      0,                  "keycloak", "OAuth2 System (interactive jwt)"),
 SDATA (ASN_OCTET_STR,   "auth_url",         0,                  "",         "OAuth2 Server Url (interactive jwt)"),
 SDATA (ASN_OCTET_STR,   "auth_owner",       0,                  "",         "OAuth2 Owner (interactive jwt)"),
-SDATA (ASN_OCTET_STR,   "realm_name",       0,                  "",         "Remote realm name (used for Authorized Party, 'azp' field of jwt)."),
+SDATA (ASN_OCTET_STR,   "realm_role",       0,                  "",         "Realm role (used for Authorized Party, 'azp' field of jwt, client_id in keycloak)"),
 SDATA (ASN_OCTET_STR,   "user_id",          0,                  "",         "OAuth2 User Id (get now a jwt)"),
 SDATA (ASN_OCTET_STR,   "user_passw",       0,                  "",         "OAuth2 User Password (get now a jwt)"),
 SDATA (ASN_OCTET_STR,   "jwt",              0,                  "",         "Jwt"),
