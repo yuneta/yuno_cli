@@ -805,6 +805,12 @@ PRIVATE int linenoiseHistorySave(PRIVATE_DATA *l, const char *filename)
         return -1;
     for (int i = 0; i < l->history_len; i++) {
         if(!empty_string(l->history[i])) {
+            #define PASSW "passw"
+            char *p = strstr(l->history[i], PASSW);
+            if(p) {
+                p += strlen(PASSW);
+                *p = 0;
+            }
             fprintf(fp, "%s\n", l->history[i]);
         }
     }

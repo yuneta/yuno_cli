@@ -58,6 +58,7 @@ PRIVATE json_t *cmd_remove_shortkey(hgobj gobj, const char *cmd, json_t *kw, hgo
 PRIVATE json_t *cmd_list_shortkey(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_list_history(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_clear_history(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
+PRIVATE json_t *cmd_do_authenticate_task(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 
 PRIVATE sdata_desc_t pm_help[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
@@ -108,6 +109,16 @@ SDATAPM (ASN_OCTET_STR, "key",          0,              0,          "Shortkey"),
 SDATAPM (ASN_OCTET_STR, "command",      0,              0,          "Command"),
 SDATA_END()
 };
+PRIVATE sdata_desc_t pm_authenticate[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "auth_system",  0,              "",         "OAuth2 System (interactive jwt)"),
+SDATAPM (ASN_OCTET_STR, "auth_url",     0,              "",         "OAuth2 Server Url (interactive jwt)"),
+SDATAPM (ASN_OCTET_STR, "auth_owner",   0,              "",         "OAuth2 Owner (interactive jwt)"),
+SDATAPM (ASN_OCTET_STR, "realm_role",   0,              "",         "Realm role (used for Authorized Party, 'azp' field of jwt, client_id in keycloak)"),
+SDATAPM (ASN_OCTET_STR, "user_id",      0,              "",         "OAuth2 User Id (interactive jwt)"),
+SDATAPM (ASN_OCTET_STR, "user_passw",   0,              "",         "OAuth2 User password (interactive jwt)"),
+SDATA_END()
+};
 
 PRIVATE const char *a_help[] = {"h", "?", 0};
 PRIVATE const char *a_quit[] = {"q", 0};
@@ -156,6 +167,7 @@ SDATACM (ASN_OCTET_STR, "remove-shortkey",  0,                  pm_shortkey,cmd_
 SDATACM (ASN_OCTET_STR, "shortkeys",        0,                  0,          cmd_list_shortkey, "List shortkeys."),
 SDATACM (ASN_OCTET_STR, "history",          0,                  0,          cmd_list_history, "List command history."),
 SDATACM (ASN_OCTET_STR, "clear-history",    0,                  0,          cmd_clear_history, "Delete command history."),
+SDATACM (ASN_OCTET_STR, "authenticate",     0,                  pm_authenticate,cmd_do_authenticate_task, "Authenticate to get a jwt to do remote connection."),
 SDATACM (ASN_OCTET_STR, "",                 0,                  0,          0,          ""),
 SDATACM (ASN_OCTET_STR, "",                 0,                  0,          0,          "You can execute console commands in connection windows with ! prefix."),
 SDATACM (ASN_OCTET_STR, "",                 0,                  0,          0,          "You can force display mode form with * prefix."),
@@ -169,12 +181,6 @@ SDATA_END()
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
 /*-ATTR-type------------name----------------flag----------------default-----description---------- */
-SDATA (ASN_OCTET_STR,   "auth_system",      0,                  "keycloak", "OAuth2 System (interactive jwt)"),
-SDATA (ASN_OCTET_STR,   "auth_url",         0,                  "",         "OAuth2 Server Url (interactive jwt)"),
-SDATA (ASN_OCTET_STR,   "auth_owner",       0,                  "",         "OAuth2 Owner (interactive jwt)"),
-SDATA (ASN_OCTET_STR,   "realm_role",       0,                  "",         "Realm role (used for Authorized Party, 'azp' field of jwt, client_id in keycloak)"),
-SDATA (ASN_OCTET_STR,   "user_id",          0,                  "",         "OAuth2 User Id (get now a jwt)"),
-SDATA (ASN_OCTET_STR,   "user_passw",       0,                  "",         "OAuth2 User Password (get now a jwt)"),
 SDATA (ASN_OCTET_STR,   "jwt",              0,                  "",         "Jwt"),
 SDATA (ASN_OCTET_STR,   "display_mode",     SDF_WR|SDF_PERSIST, "table",    "Display mode: table or form"),
 SDATA (ASN_OCTET_STR,   "editor",           SDF_WR|SDF_PERSIST, "vim",      "Editor"),
@@ -972,6 +978,97 @@ PRIVATE json_t *cmd_clear_history(hgobj gobj, const char *cmd, json_t *kw, hgobj
     );
 }
 
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *cmd_do_authenticate_task(hgobj gobj, const char *cmd, json_t *kw, hgobj src)
+{
+    /*-----------------------------*
+     *      Get parameters
+     *-----------------------------*/
+    const char *auth_system = kw_get_str(kw, "auth_system", "", 0); // "keycloak" by default
+    const char *auth_url = kw_get_str(kw, "auth_url", "", 0);
+    const char *auth_owner = kw_get_str(kw, "auth_owner", "", 0);
+    const char *user_id = kw_get_str(kw, "user_id", "", 0);
+    const char *user_passw = kw_get_str(kw, "user_passw", "", 0);
+    const char *azp = kw_get_str(kw, "realm_role", "", 0);   // Our realm is the Authorized Party in jwt
+
+    if(empty_string(auth_url)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What auth_url? (OAuth2 Server Url)"),
+            0,
+            0,
+            kw
+        );
+    }
+    if(empty_string(auth_owner)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What auth_owner? (OAuth2 Owner)"),
+            0,
+            0,
+            kw
+        );
+    }
+    if(empty_string(azp)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What realm_role? ('azp' Oauth2 Authorized Party, client_id in keycloak)"),
+            0,
+            0,
+            kw
+        );
+    }
+    if(empty_string(user_id)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What user_id? (OAuth2 User Id)"),
+            0,
+            0,
+            kw
+        );
+    }
+    if(empty_string(user_passw)) {
+        return msg_iev_build_webix(
+            gobj,
+            -1,
+            json_local_sprintf("What user_passw? (OAuth2 User Password)"),
+            0,
+            0,
+            kw
+        );
+    }
+
+    /*-----------------------------*
+     *      Create the task
+     *-----------------------------*/
+    json_t *kw_task = json_pack("{s:s, s:s, s:s, s:s, s:s, s:s}",
+        "auth_system", auth_system,
+        "auth_url", auth_url,
+        "auth_owner", auth_owner,
+        "user_id", user_id,
+        "user_passw", user_passw,
+        "azp", azp
+    );
+
+    hgobj gobj_task = gobj_create_unique("task-authenticate", GCLASS_TASK_AUTHENTICATE, kw_task, gobj);
+    gobj_subscribe_event(gobj_task, "EV_ON_TOKEN", 0, gobj);
+    gobj_set_volatil(gobj_task, TRUE); // auto-destroy
+
+    /*-----------------------*
+     *      Start task
+     *-----------------------*/
+    gobj_start(gobj_task);
+
+    KW_DECREF(kw);
+    return 0;
+}
+
 
 
 
@@ -1050,8 +1147,6 @@ PRIVATE int create_display_framework(hgobj gobj)
         kw_toptoolbar,
         gobj_toptoolbarbox
     );
-
-
 
     /*---------------------------------*
      *  Work area
@@ -2627,6 +2722,26 @@ PRIVATE int ac_agent_response(hgobj gobj, const char *event, json_t *kw, hgobj s
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE int ac_on_token(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    const char *comment = kw_get_str(kw, "comment", "", 0);
+    int result = kw_get_int(kw, "result", -1, KW_REQUIRED);
+    if(result < 0) {
+        msg2statusline(gobj, TRUE, comment);
+
+    } else {
+        const char *jwt = kw_get_str(kw, "jwt", "", KW_REQUIRED);
+        gobj_write_str_attr(gobj, "jwt", jwt);
+        msg2statusline(gobj, FALSE, comment);
+    }
+
+    KW_DECREF(kw);
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
 #ifdef TEST_KDEVELOP_KB
@@ -2664,6 +2779,7 @@ PRIVATE const EVENT input_events[] = {
     {"EV_MT_STATS_ANSWER",          EVF_PUBLIC_EVENT, 0, 0},
     {"EV_MT_COMMAND_ANSWER",        EVF_PUBLIC_EVENT, 0, 0},
 
+    {"EV_ON_TOKEN",                 0, 0, 0},
     {"EV_STOPPED",                  0, 0, 0},
     {"EV_TIMEOUT",                  0, 0, 0},
     {NULL, 0, 0, 0}
@@ -2693,6 +2809,7 @@ PRIVATE EV_ACTION ST_IDLE[] = {
     {"EV_READ_JSON",                ac_read_json,               0},
     {"EV_READ_FILE",                ac_read_file,               0},
     {"EV_READ_BINARY_FILE",         ac_read_binary_file,        0},
+    {"EV_ON_TOKEN",                 ac_on_token,                0},
     {"EV_TIMEOUT",                  ac_timeout,                 0},
     {"EV_STOPPED",                  0,                          0},
     {0,0,0}
