@@ -1047,23 +1047,34 @@ PRIVATE json_t *cmd_do_authenticate_task(hgobj gobj, const char *cmd, json_t *kw
     /*-----------------------------*
      *      Create the task
      *-----------------------------*/
-    json_t *kw_task = json_pack("{s:s, s:s, s:s, s:s, s:s, s:s}",
-        "auth_system", auth_system,
-        "auth_url", auth_url,
-        "auth_owner", auth_owner,
-        "user_id", user_id,
-        "user_passw", user_passw,
-        "azp", azp
-    );
+    hgobj gobj_task = gobj_find_unique_gobj("task-authenticate", FALSE);
+    if(!gobj_task) {
+        json_t *kw_task = json_pack("{s:s, s:s, s:s, s:s, s:s, s:s}",
+            "auth_system", auth_system,
+            "auth_url", auth_url,
+            "auth_owner", auth_owner,
+            "user_id", user_id,
+            "user_passw", user_passw,
+            "azp", azp
+        );
+        gobj_task = gobj_create_unique("task-authenticate", GCLASS_TASK_AUTHENTICATE, kw_task, gobj);
+    } else {
+        gobj_write_str_attr(gobj_task, "auth_system", auth_system);
+        gobj_write_str_attr(gobj_task, "auth_url", auth_url);
+        gobj_write_str_attr(gobj_task, "auth_owner", auth_owner);
+        gobj_write_str_attr(gobj_task, "user_id", user_id);
+        gobj_write_str_attr(gobj_task, "user_passw", user_passw);
+        gobj_write_str_attr(gobj_task, "azp", azp);
+    }
+    if(gobj_task) {
+        gobj_subscribe_event(gobj_task, "EV_ON_TOKEN", 0, gobj);
+        gobj_set_volatil(gobj_task, TRUE); // auto-destroy
 
-    hgobj gobj_task = gobj_create_unique("task-authenticate", GCLASS_TASK_AUTHENTICATE, kw_task, gobj);
-    gobj_subscribe_event(gobj_task, "EV_ON_TOKEN", 0, gobj);
-    gobj_set_volatil(gobj_task, TRUE); // auto-destroy
-
-    /*-----------------------*
-     *      Start task
-     *-----------------------*/
-    gobj_start(gobj_task);
+        /*-----------------------*
+         *      Start task
+         *-----------------------*/
+        gobj_start(gobj_task);
+    }
 
     KW_DECREF(kw);
     return 0;
@@ -2735,6 +2746,8 @@ PRIVATE int ac_on_token(hgobj gobj, const char *event, json_t *kw, hgobj src)
         msg2statusline(gobj, FALSE, comment);
     }
 
+    gobj_stop(src);
+
     KW_DECREF(kw);
     return 0;
 }
@@ -2745,7 +2758,7 @@ PRIVATE int ac_on_token(hgobj gobj, const char *event, json_t *kw, hgobj src)
 PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
 #ifdef TEST_KDEVELOP_KB
-        char msg[] = "c\n";
+        char msg[] = "authenticate auth_url=https://login.miyuneta.es:8642/auth/ auth_owner=mulesol realm_role=yunetacontrol user_id=ginsmar@gmail.com user_passw=\n";
         for(int i=0; i<strlen(msg); i++) {
             process_key(gobj, msg[i]);
         }
