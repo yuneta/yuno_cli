@@ -326,7 +326,9 @@ PRIVATE int fix_child_sizes(hgobj gobj)
     for(int i=0; i<ln; i++) {
         hgobj child;
         gobj_child_by_index(gobj, i+1, &child);
-
+        if(gobj_is_destroying(child)) {
+            continue;
+        }
         int child_width = gobj_read_int32_attr(child, "w");
         int child_height = gobj_read_int32_attr(child, "h");
 
@@ -366,6 +368,9 @@ PRIVATE int fix_child_sizes(hgobj gobj)
         for(int i=0; i<ln; i++) {
             hgobj child;
             gobj_child_by_index(gobj, i+1, &child);
+            if(gobj_is_destroying(child)) {
+                continue;
+            }
 
             int new_height, new_width;
             if (height_flexs[i]) {
@@ -402,6 +407,9 @@ PRIVATE int fix_child_sizes(hgobj gobj)
         for(int i=0; i<ln; i++) {
             hgobj child;
             gobj_child_by_index(gobj, i+1, &child);
+            if(gobj_is_destroying(child)) {
+                continue;
+            }
 
             int new_height, new_width;
             if (width_flexs[i]) {
