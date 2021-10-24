@@ -348,7 +348,10 @@ PRIVATE int mt_stop(hgobj gobj)
  *      Framework Method inject_event
  ***************************************************************************/
 PRIVATE int mt_inject_event(hgobj gobj, const char *event, json_t *kw, hgobj src)
-{   // TODO esto se usa??
+{
+    // TODO esto se usa??
+    // Por aquí entran eventos que no están definidos en el automata
+    // En ac_agent_response se displaya kw
     return ac_agent_response(gobj, event, kw, src);
 }
 
@@ -364,7 +367,7 @@ PRIVATE int mt_inject_event(hgobj gobj, const char *event, json_t *kw, hgobj src
 
 PRIVATE char agent_insecure_config[]= "\
 {                                               \n\
-    'name': '(^^__url__^^)',                    \n\
+    'name': '(^^__url__^^)-(^^__range__^^)',    \n\
     'gclass': 'IEvent_cli',                     \n\
     'as_unique': true,                          \n\
     'kw': {                                     \n\
@@ -374,23 +377,23 @@ PRIVATE char agent_insecure_config[]= "\
     },                                          \n\
     'zchilds': [                                 \n\
         {                                               \n\
-            'name': '(^^__url__^^)',                    \n\
+            'name': '(^^__url__^^)-(^^__range__^^)',    \n\
             'gclass': 'IOGate',                         \n\
             'kw': {                                     \n\
             },                                          \n\
             'zchilds': [                                 \n\
                 {                                               \n\
-                    'name': '(^^__url__^^)',                    \n\
+                    'name': '(^^__url__^^)-(^^__range__^^)',    \n\
                     'gclass': 'Channel',                        \n\
                     'kw': {                                     \n\
                     },                                          \n\
                     'zchilds': [                                 \n\
                         {                                               \n\
-                            'name': '(^^__url__^^)',                    \n\
+                            'name': '(^^__url__^^)-(^^__range__^^)',    \n\
                             'gclass': 'GWebSocket',                     \n\
                             'zchilds': [                                \n\
                                 {                                       \n\
-                                    'name': '(^^__url__^^)',            \n\
+                                    'name': '(^^__url__^^)-(^^__range__^^)',\n\
                                     'gclass': 'Connex',                 \n\
                                     'kw': {                             \n\
                                         'urls':[                        \n\
@@ -410,7 +413,7 @@ PRIVATE char agent_insecure_config[]= "\
 
 PRIVATE char agent_secure_config[]= "\
 {                                               \n\
-    'name': '(^^__url__^^)',                    \n\
+    'name': '(^^__url__^^)-(^^__range__^^)',    \n\
     'gclass': 'IEvent_cli',                     \n\
     'as_unique': true,                          \n\
     'kw': {                                     \n\
@@ -421,23 +424,23 @@ PRIVATE char agent_secure_config[]= "\
     },                                          \n\
     'zchilds': [                                 \n\
         {                                               \n\
-            'name': '(^^__url__^^)',                    \n\
+            'name': '(^^__url__^^)-(^^__range__^^)',    \n\
             'gclass': 'IOGate',                         \n\
             'kw': {                                     \n\
             },                                          \n\
             'zchilds': [                                 \n\
                 {                                               \n\
-                    'name': '(^^__url__^^)',                    \n\
+                    'name': '(^^__url__^^)-(^^__range__^^)',    \n\
                     'gclass': 'Channel',                        \n\
                     'kw': {                                     \n\
                     },                                          \n\
                     'zchilds': [                                 \n\
                         {                                               \n\
-                            'name': '(^^__url__^^)',                    \n\
+                            'name': '(^^__url__^^)-(^^__range__^^)',    \n\
                             'gclass': 'GWebSocket',                     \n\
                             'zchilds': [                                \n\
                                 {                                       \n\
-                                    'name': '(^^__url__^^)',            \n\
+                                    'name': '(^^__url__^^)-(^^__range__^^)',\n\
                                     'gclass': 'Connexs',                \n\
                                     'kw': {                             \n\
                                         'crypto': {                     \n\
@@ -474,13 +477,16 @@ PRIVATE json_t *cmd_connect(hgobj gobj, const char *command, json_t *kw, hgobj s
      *  Each display window has a gobj to send the commands (saved in user_data).
      *  For external agents create a filter-chain of gobjs
      */
-    json_t * jn_config_variables = json_pack("{s:{s:s, s:s, s:s, s:s, s:s}}",
+    static int range = 0;
+    range++;
+    json_t * jn_config_variables = json_pack("{s:{s:s, s:s, s:s, s:s, s:s, s:i}}",
         "__json_config_variables__",
             "__jwt__", jwt,
             "__url__", url,
             "__yuno_name__", yuno_name,
             "__yuno_role__", yuno_role,
-            "__yuno_service__", yuno_service
+            "__yuno_service__", yuno_service,
+            "__range__", range
     );
     char *sjson_config_variables = json2str(jn_config_variables);
     JSON_DECREF(jn_config_variables);
@@ -491,9 +497,9 @@ PRIVATE json_t *cmd_connect(hgobj gobj, const char *command, json_t *kw, hgobj s
     char schema[20]={0}, host[120]={0}, port[40]={0};
     parse_http_url(url, schema, sizeof(schema), host, sizeof(host), port, sizeof(port), FALSE);
 
-    char *agent_config = agent_insecure_config;
-    if(strcmp(schema, "wss")==0) {
-        agent_config = agent_secure_config;
+    char *agent_config = agent_secure_config; // Prevalence
+    if(strcmp(schema, "ws")==0) {
+        agent_config = agent_insecure_config;
     }
 
     hgobj gobj_remote_agent = gobj_create_tree(
@@ -2771,6 +2777,36 @@ PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
 }
 
 /***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int ac_tty_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    // TODO
+    KW_DECREF(kw);
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int ac_tty_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    // TODO
+    KW_DECREF(kw);
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int ac_tty_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    // TODO
+    KW_DECREF(kw);
+    return 0;
+}
+
+/***************************************************************************
  *                          FSM
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = {
@@ -2788,10 +2824,11 @@ PRIVATE const EVENT input_events[] = {
     {"EV_READ_JSON",                EVF_PUBLIC_EVENT, 0, 0},
     {"EV_READ_FILE",                EVF_PUBLIC_EVENT, 0, 0},
     {"EV_READ_BINARY_FILE",         EVF_PUBLIC_EVENT, 0, 0},
-
     {"EV_MT_STATS_ANSWER",          EVF_PUBLIC_EVENT, 0, 0},
     {"EV_MT_COMMAND_ANSWER",        EVF_PUBLIC_EVENT, 0, 0},
-
+    {"EV_TTY_OPEN",                 EVF_PUBLIC_EVENT, 0, 0},
+    {"EV_TTY_CLOSE",                EVF_PUBLIC_EVENT, 0, 0},
+    {"EV_TTY_DATA",                 EVF_PUBLIC_EVENT, 0, 0},
     {"EV_ON_TOKEN",                 0, 0, 0},
     {"EV_STOPPED",                  0, 0, 0},
     {"EV_TIMEOUT",                  0, 0, 0},
@@ -2822,6 +2859,9 @@ PRIVATE EV_ACTION ST_IDLE[] = {
     {"EV_READ_JSON",                ac_read_json,               0},
     {"EV_READ_FILE",                ac_read_file,               0},
     {"EV_READ_BINARY_FILE",         ac_read_binary_file,        0},
+    {"EV_TTY_OPEN",                 ac_tty_open,                0},
+    {"EV_TTY_CLOSE",                ac_tty_close,               0},
+    {"EV_TTY_DATA",                 ac_tty_data,                0},
     {"EV_ON_TOKEN",                 ac_on_token,                0},
     {"EV_TIMEOUT",                  ac_timeout,                 0},
     {"EV_STOPPED",                  0,                          0},
