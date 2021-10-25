@@ -221,6 +221,8 @@ typedef struct _PRIVATE_DATA {
 
     FILE *file_saving_output;
     json_t *jn_shortkeys;
+
+    json_t *jn_window_counters;
 } PRIVATE_DATA;
 
 
@@ -248,6 +250,7 @@ PRIVATE void mt_create(hgobj gobj)
         priv->jn_shortkeys = gobj_read_json_attr(gobj, "shortkeys");
         JSON_DECREF(jn_dict);
     }
+    priv->jn_window_counters = json_object();
 
     /*
      *  Do copy of heavy used parameters, for quick access.
@@ -272,6 +275,9 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
  ***************************************************************************/
 PRIVATE void mt_destroy(hgobj gobj)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    JSON_DECREF(priv->jn_window_counters);
 }
 
 /***************************************************************************
@@ -2246,6 +2252,7 @@ PRIVATE int ac_previous_window(hgobj gobj, const char *event, json_t *kw, hgobj 
 PRIVATE int ac_next_window(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
     json_t *kw_sel = json_pack("{s:s}",
         "selected", ""
     );
@@ -2262,7 +2269,7 @@ PRIVATE int ac_next_window(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE int ac_on_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    static int n = 0;
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     const char *agent_name = kw_get_str(kw, "remote_yuno_name", 0, 0); // remote agent name
     char temp[NAME_MAX];
@@ -2272,8 +2279,10 @@ PRIVATE int ac_on_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
      */
     hgobj wn_disp = get_display_window(gobj, agent_name);
     if(wn_disp) {
+        int n = kw_get_int(priv->jn_window_counters, agent_name, 0, KW_CREATE);
         n++;
         snprintf(temp, sizeof(temp), "%s-%d", agent_name, n);
+        json_object_set_new(priv->jn_window_counters, agent_name, json_integer(n));
         agent_name = temp;
     }
 
@@ -2320,6 +2329,8 @@ PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
     hgobj wn_disp = gobj_read_pointer_attr(src, "user_data");
 
     const char *agent_name = gobj_name(wn_disp);
+    json_object_set_new(priv->jn_window_counters, agent_name, json_integer(0));
+
     hgobj wn_display_console = get_display_window(gobj, "console");
     display_webix_result(
         gobj,
