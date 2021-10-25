@@ -2160,6 +2160,7 @@ PRIVATE int ac_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
         if(gobj_cmd) {
             webix = gobj_command(gobj_cmd, xcmd, kw_command, gobj);
         } else {
+            json_decref(kw_command);
             webix = msg_iev_build_webix(
                 gobj,
                 -1,
@@ -2326,10 +2327,25 @@ PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
         KW_DECREF(kw);
         return 0;
     }
-    hgobj wn_disp = gobj_read_pointer_attr(src, "user_data");
 
+    hgobj wn_disp = gobj_read_pointer_attr(src, "user_data");
     const char *agent_name = gobj_name(wn_disp);
+
     json_object_set_new(priv->jn_window_counters, agent_name, json_integer(0));
+
+    // Delete tty's
+    json_t *consoles = gobj_kw_get_user_data(src, "consoles", 0, KW_EXTRACT);
+    if(consoles) {
+        const char *window_tty_name; json_t *jn_;
+        json_object_foreach(consoles, window_tty_name, jn_) {
+            destroy_static(gobj, window_tty_name);
+            destroy_display_window(gobj, window_tty_name);
+        }
+        json_decref(consoles);
+    }
+
+    destroy_static(gobj, agent_name);
+    destroy_display_window(gobj, agent_name);
 
     hgobj wn_display_console = get_display_window(gobj, "console");
     display_webix_result(
@@ -2344,9 +2360,6 @@ PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
             0
         )
     );
-
-    destroy_static(gobj, agent_name);
-    destroy_display_window(gobj, agent_name);
 
     set_top_window(gobj, "console");
     SetFocus(priv->gobj_editline);
@@ -2795,7 +2808,32 @@ PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE int ac_tty_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    // TODO
+    const char *agent_name = gobj_name(gobj_read_pointer_attr(src, "user_data"));
+    const char *tty_name = kw_get_str(kw, "data`name", 0, 0);
+    char window_tty_name[NAME_MAX];
+    snprintf(window_tty_name, sizeof(window_tty_name), "%s(%s)", agent_name, tty_name);
+
+    /*
+     *  Create display window of external agent
+     */
+    hgobj wn_tty_disp = create_display_window(gobj, window_tty_name, 0);
+    if(wn_tty_disp) {
+        char name_[NAME_MAX+20];
+        snprintf(name_, sizeof(name_), "consoles`%s", window_tty_name);
+        gobj_kw_get_user_data( // save in input gate
+            src,
+            name_,
+            json_true(), // owned
+            KW_CREATE
+        );
+
+        /*
+         *  Create button window of console (right now implemented as static window)
+         */
+        create_static(gobj, window_tty_name, 0);
+        set_top_window(gobj, window_tty_name);
+    }
+
     KW_DECREF(kw);
     return 0;
 }
@@ -2805,7 +2843,42 @@ PRIVATE int ac_tty_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE int ac_tty_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    // TODO
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    if(!gobj_is_running(gobj)) {
+        KW_DECREF(kw);
+        return 0;
+    }
+
+    const char *agent_name = gobj_name(gobj_read_pointer_attr(src, "user_data"));
+    const char *tty_name = kw_get_str(kw, "data`name", 0, 0);
+    char window_tty_name[NAME_MAX];
+    snprintf(window_tty_name, sizeof(window_tty_name), "%s(%s)", agent_name, tty_name);
+
+    hgobj wn_tty_disp = get_display_window(gobj, window_tty_name);
+    if(wn_tty_disp) {
+        char name_[NAME_MAX];
+        snprintf(name_, sizeof(name_), "consoles`%s", tty_name);
+        json_decref(gobj_kw_get_user_data( // delete in input gate
+            src,
+            name_,
+            json_true(), // owned
+            KW_EXTRACT
+        ));
+
+        destroy_static(gobj, window_tty_name);
+        destroy_display_window(gobj, window_tty_name);
+    }
+
+    set_top_window(gobj, agent_name);
+    SetFocus(priv->gobj_editline);
+
+    // No puedo parar y destruir con libuv.
+    // De momento conexiones indestructibles, destruibles solo con la salida del yuno.
+    // Hasta que quite la dependencia de libuv. FUTURE
+    //gobj_stop_tree(src);
+    //gobj_destroy(tree);
+
     KW_DECREF(kw);
     return 0;
 }
