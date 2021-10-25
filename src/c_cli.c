@@ -17,6 +17,110 @@
 /***************************************************************************
  *              Constants
  ***************************************************************************/
+enum {
+    CTRL_A = 1,
+    CTRL_B = 2,
+    CTRL_D = 4,
+    CTRL_E = 5,
+    CTRL_F = 6,
+    CTRL_H = 8,
+    BACKSPACE =  127,
+    BACKSPACE2 = 0177,
+    TAB = 9,
+    CTRL_K = 11,
+    ENTER = 10,
+    CTRL_N = 14,
+    CTRL_P = 16,
+    CTRL_T = 20,
+    CTRL_U = 21,
+    CTRL_W = 23,
+    CTRL_Y = 25,
+
+    CTRL_START = 01027,
+    CTRL_PPAGE = 01053,
+    CTRL_NPAGE = 01046,
+    CTRL_END = 01022,
+
+    CTRL_START2 = 01031,
+    CTRL_PPAGE2 = 01055,
+    CTRL_NPAGE2 = 01050,
+    CTRL_END2 = 01024,
+
+    ALT_LEFT = 01037,
+    ALT_RIGHT = 01056,
+
+    ALT_LEFT2 = 01041,
+    ALT_RIGHT2 = 01060,
+
+    CTRL_LEFT = 01043,
+    CTRL_RIGHT = 01062,
+    CTRL_UP = 01070,
+    CTRL_DOWN = 01017,
+
+    CTRL_LEFT2 = 0611,
+    CTRL_RIGHT2 = 0622,
+    CTRL_UP2 = 0521,
+    CTRL_DOWN2 = 0520,
+
+};
+
+struct keytable_s {
+    const char *dst_gobj;
+    const char *event;
+    unsigned long long key;
+} keytable[] = {
+{"editline",        "EV_EDITLINE_MOVE_START",       CTRL_A},
+{"editline",        "EV_EDITLINE_MOVE_START",       KEY_HOME},
+{"editline",        "EV_EDITLINE_MOVE_END",         CTRL_E},
+{"editline",        "EV_EDITLINE_MOVE_END",         KEY_END},
+{"editline",        "EV_EDITLINE_MOVE_LEFT",        CTRL_B},
+{"editline",        "EV_EDITLINE_MOVE_LEFT",        KEY_LEFT},
+{"editline",        "EV_EDITLINE_MOVE_RIGHT",       CTRL_F},
+{"editline",        "EV_EDITLINE_MOVE_RIGHT",       KEY_RIGHT},
+{"editline",        "EV_EDITLINE_DEL_CHAR",         CTRL_D},
+{"editline",        "EV_EDITLINE_DEL_CHAR",         KEY_DC},
+{"editline",        "EV_EDITLINE_BACKSPACE",        CTRL_H},
+{"editline",        "EV_EDITLINE_BACKSPACE",        BACKSPACE2},
+{"editline",        "EV_EDITLINE_BACKSPACE",        KEY_BACKSPACE},
+{"editline",        "EV_EDITLINE_COMPLETE_LINE",    TAB},
+//{"editline",        "EV_EDITLINE_DEL_EOL",          CTRL_K},
+{"editline",        "EV_EDITLINE_ENTER",            ENTER},
+{"editline",        "EV_EDITLINE_ENTER",            KEY_ENTER},
+{"editline",        "EV_EDITLINE_PREV_HIST",        KEY_UP},
+{"editline",        "EV_EDITLINE_NEXT_HIST",        KEY_DOWN},
+{"editline",        "EV_EDITLINE_SWAP_CHAR",        CTRL_T},
+{"editline",        "EV_EDITLINE_DEL_LINE",         CTRL_U},
+{"editline",        "EV_EDITLINE_DEL_LINE",         CTRL_Y},
+{"editline",        "EV_EDITLINE_DEL_PREV_WORD",    CTRL_W},
+
+{"__top_display_window__",  "EV_CLRSCR",                    CTRL_K},
+
+{"__top_display_window__",  "EV_SCROLL_LINE_UP",            CTRL_PPAGE},
+{"__top_display_window__",  "EV_SCROLL_LINE_DOWN",          CTRL_NPAGE},
+{"__top_display_window__",  "EV_SCROLL_LINE_UP",            CTRL_PPAGE2},
+{"__top_display_window__",  "EV_SCROLL_LINE_DOWN",          CTRL_NPAGE2},
+
+{"__top_display_window__",  "EV_SCROLL_PAGE_UP",            KEY_PPAGE},
+{"__top_display_window__",  "EV_SCROLL_PAGE_DOWN",          KEY_NPAGE},
+
+{"__top_display_window__",  "EV_SCROLL_TOP",                CTRL_START2},
+{"__top_display_window__",  "EV_SCROLL_BOTTOM",             CTRL_END2},
+{"__top_display_window__",  "EV_SCROLL_TOP",                CTRL_START},
+{"__top_display_window__",  "EV_SCROLL_BOTTOM",             CTRL_END},
+
+{"cli",             "EV_PREVIOUS_WINDOW",           ALT_LEFT2},
+{"cli",             "EV_NEXT_WINDOW",               ALT_RIGHT2},
+{"cli",             "EV_PREVIOUS_WINDOW",           ALT_LEFT},
+{"cli",             "EV_NEXT_WINDOW",               ALT_RIGHT},
+{"cli",             "EV_PREVIOUS_WINDOW",           CTRL_LEFT},
+{"cli",             "EV_NEXT_WINDOW",               CTRL_RIGHT},
+{"cli",             "EV_PREVIOUS_WINDOW",           CTRL_LEFT2},
+{"cli",             "EV_NEXT_WINDOW",               CTRL_RIGHT2},
+{"cli",             "EV_PREVIOUS_WINDOW",           CTRL_P},
+{"cli",             "EV_NEXT_WINDOW",               CTRL_N},
+
+{0}
+};
 
 /***************************************************************************
  *              Structures
@@ -26,7 +130,12 @@
  *              Prototypes
  ***************************************************************************/
 PRIVATE int create_display_framework(hgobj gobj);
-PRIVATE void on_poll_cb(uv_poll_t *req, int status, int events);
+
+PRIVATE void on_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf);
+PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
+PRIVATE void on_close_cb(uv_handle_t* handle);
+PRIVATE void do_close(hgobj gobj);
+
 PRIVATE hgobj create_display_window(hgobj gobj, const char* name, json_t* kw_display_window);
 PRIVATE hgobj get_display_window(hgobj gobj, const char *name);
 PRIVATE int destroy_display_window(hgobj gobj, const char *name);
@@ -217,7 +326,10 @@ typedef struct _PRIVATE_DATA {
     hgobj gobj_bottomtoolbarbox;
     hgobj gobj_stsline;
 
-    uv_poll_t uv_poll;
+    grow_buffer_t bfinput;
+    uv_tty_t uv_tty;
+    char uv_handler_active;
+    char uv_read_active;
 
     FILE *file_saving_output;
     json_t *jn_shortkeys;
@@ -277,6 +389,10 @@ PRIVATE void mt_destroy(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
+    /*
+     *  Free data
+     */
+    growbf_reset(&priv->bfinput);
     JSON_DECREF(priv->jn_window_counters);
 }
 
@@ -293,12 +409,17 @@ PRIVATE int mt_start(hgobj gobj)
     }
     gobj_start(priv->timer);
 
-    uv_loop_t *loop = yuno_uv_event_loop();
+    if(gobj_trace_level(gobj) & TRACE_UV) {
+        trace_msg(">>> uv_init tty p=%p", &priv->uv_tty);
+    }
+    uv_tty_init(yuno_uv_event_loop(), &priv->uv_tty, STDIN_FILENO, 0);
+    priv->uv_tty.data = gobj;
+    priv->uv_handler_active = 1;
 
-    uv_poll_init(loop, &priv->uv_poll, STDIN_FILENO);
-    priv->uv_poll.data = gobj;
+    uv_tty_set_mode(&priv->uv_tty, UV_TTY_MODE_RAW);
 
-    uv_poll_start(&priv->uv_poll, UV_READABLE, on_poll_cb);
+    priv->uv_read_active = 1;
+    uv_read_start((uv_stream_t*)&priv->uv_tty, on_alloc_cb, on_read_cb);
 
     SetFocus(priv->gobj_editline);
     msg2statusline(gobj, 0, "Wellcome to Yuneta. Type help for assistance.");
@@ -344,8 +465,10 @@ PRIVATE int mt_stop(hgobj gobj)
         priv->file_saving_output = 0;
     }
 
-    uv_poll_stop(&priv->uv_poll);
-    uv_close((uv_handle_t *)&priv->uv_poll, 0);
+    uv_tty_set_mode(&priv->uv_tty, UV_TTY_MODE_NORMAL);
+    uv_tty_reset_mode();
+    do_close(gobj);
+
     gobj_stop_tree(gobj);
     return 0;
 }
@@ -1621,131 +1744,14 @@ PRIVATE int msg2statusline(hgobj gobj, BOOL error, const char *fmt, ...)
     return 0;
 }
 
-
-
-
-            /***************************
-             *      Keyboard, Shorcuts
-             ***************************/
-
-
-
-
-enum {
-    CTRL_A = 1,
-    CTRL_B = 2,
-    CTRL_D = 4,
-    CTRL_E = 5,
-    CTRL_F = 6,
-    CTRL_H = 8,
-    BACKSPACE =  127,
-    BACKSPACE2 = 0177,
-    TAB = 9,
-    CTRL_K = 11,
-    ENTER = 10,
-    CTRL_N = 14,
-    CTRL_P = 16,
-    CTRL_T = 20,
-    CTRL_U = 21,
-    CTRL_W = 23,
-    CTRL_Y = 25,
-
-    CTRL_START = 01027,
-    CTRL_PPAGE = 01053,
-    CTRL_NPAGE = 01046,
-    CTRL_END = 01022,
-
-    CTRL_START2 = 01031,
-    CTRL_PPAGE2 = 01055,
-    CTRL_NPAGE2 = 01050,
-    CTRL_END2 = 01024,
-
-    ALT_LEFT = 01037,
-    ALT_RIGHT = 01056,
-
-    ALT_LEFT2 = 01041,
-    ALT_RIGHT2 = 01060,
-
-    CTRL_LEFT = 01043,
-    CTRL_RIGHT = 01062,
-    CTRL_UP = 01070,
-    CTRL_DOWN = 01017,
-
-    CTRL_LEFT2 = 0611,
-    CTRL_RIGHT2 = 0622,
-    CTRL_UP2 = 0521,
-    CTRL_DOWN2 = 0520,
-
-};
-
-struct {
-    const char *dst_gobj;
-    const char *event;
-    int key;
-} keytable[] = {
-{"editline",        "EV_EDITLINE_MOVE_START",       CTRL_A},
-{"editline",        "EV_EDITLINE_MOVE_START",       KEY_HOME},
-{"editline",        "EV_EDITLINE_MOVE_END",         CTRL_E},
-{"editline",        "EV_EDITLINE_MOVE_END",         KEY_END},
-{"editline",        "EV_EDITLINE_MOVE_LEFT",        CTRL_B},
-{"editline",        "EV_EDITLINE_MOVE_LEFT",        KEY_LEFT},
-{"editline",        "EV_EDITLINE_MOVE_RIGHT",       CTRL_F},
-{"editline",        "EV_EDITLINE_MOVE_RIGHT",       KEY_RIGHT},
-{"editline",        "EV_EDITLINE_DEL_CHAR",         CTRL_D},
-{"editline",        "EV_EDITLINE_DEL_CHAR",         KEY_DC},
-{"editline",        "EV_EDITLINE_BACKSPACE",        CTRL_H},
-{"editline",        "EV_EDITLINE_BACKSPACE",        BACKSPACE2},
-{"editline",        "EV_EDITLINE_BACKSPACE",        KEY_BACKSPACE},
-{"editline",        "EV_EDITLINE_COMPLETE_LINE",    TAB},
-//{"editline",        "EV_EDITLINE_DEL_EOL",          CTRL_K},
-{"editline",        "EV_EDITLINE_ENTER",            ENTER},
-{"editline",        "EV_EDITLINE_ENTER",            KEY_ENTER},
-{"editline",        "EV_EDITLINE_PREV_HIST",        KEY_UP},
-{"editline",        "EV_EDITLINE_NEXT_HIST",        KEY_DOWN},
-{"editline",        "EV_EDITLINE_SWAP_CHAR",        CTRL_T},
-{"editline",        "EV_EDITLINE_DEL_LINE",         CTRL_U},
-{"editline",        "EV_EDITLINE_DEL_LINE",         CTRL_Y},
-{"editline",        "EV_EDITLINE_DEL_PREV_WORD",    CTRL_W},
-
-{"__top_display_window__",  "EV_CLRSCR",                    CTRL_K},
-
-{"__top_display_window__",  "EV_SCROLL_LINE_UP",            CTRL_PPAGE},
-{"__top_display_window__",  "EV_SCROLL_LINE_DOWN",          CTRL_NPAGE},
-{"__top_display_window__",  "EV_SCROLL_LINE_UP",            CTRL_PPAGE2},
-{"__top_display_window__",  "EV_SCROLL_LINE_DOWN",          CTRL_NPAGE2},
-
-{"__top_display_window__",  "EV_SCROLL_PAGE_UP",            KEY_PPAGE},
-{"__top_display_window__",  "EV_SCROLL_PAGE_DOWN",          KEY_NPAGE},
-
-{"__top_display_window__",  "EV_SCROLL_TOP",                CTRL_START2},
-{"__top_display_window__",  "EV_SCROLL_BOTTOM",             CTRL_END2},
-{"__top_display_window__",  "EV_SCROLL_TOP",                CTRL_START},
-{"__top_display_window__",  "EV_SCROLL_BOTTOM",             CTRL_END},
-
-{"cli",             "EV_PREVIOUS_WINDOW",           ALT_LEFT2},
-{"cli",             "EV_NEXT_WINDOW",               ALT_RIGHT2},
-{"cli",             "EV_PREVIOUS_WINDOW",           ALT_LEFT},
-{"cli",             "EV_NEXT_WINDOW",               ALT_RIGHT},
-{"cli",             "EV_PREVIOUS_WINDOW",           CTRL_LEFT},
-{"cli",             "EV_NEXT_WINDOW",               CTRL_RIGHT},
-{"cli",             "EV_PREVIOUS_WINDOW",           CTRL_LEFT2},
-{"cli",             "EV_NEXT_WINDOW",               CTRL_RIGHT2},
-{"cli",             "EV_PREVIOUS_WINDOW",           CTRL_P},
-{"cli",             "EV_NEXT_WINDOW",               CTRL_N},
-
-{0}
-};
-
-
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE const char *event_by_key(hgobj gobj, int kb, const char **dst_gobj)
+PRIVATE struct keytable_s *event_by_key(int kb)
 {
     for(int i=0; keytable[i].event!=0; i++) {
         if(kb == keytable[i].key) {
-            *dst_gobj = keytable[i].dst_gobj;
-            return keytable[i].event;
+            return &keytable[i];
         }
     }
     return 0;
@@ -1756,41 +1762,6 @@ PRIVATE const char *event_by_key(hgobj gobj, int kb, const char **dst_gobj)
  ***************************************************************************/
 PRIVATE int process_key(hgobj gobj, int kb)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-    const char *dst;
-    const char *event = event_by_key(gobj, kb, &dst);
-
-    if(!empty_string(event)) {
-        if(strcmp(event, "EV_EDITLINE_DEL_LINE")==0) {
-            msg2statusline(gobj, 0, "");
-        }
-
-        if(!empty_string(dst)) {
-            hgobj dst_gobj;
-            if(strcmp(dst, "__top_display_window__")==0) {
-                dst_gobj = __top_display_window__;
-            } else {
-                dst_gobj = gobj_find_unique_gobj(dst, FALSE);
-            }
-            if(!dst_gobj) {
-                log_error(0,
-                    "gobj",         "%s", gobj_full_name(gobj),
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-                    "msg",          "%s", "unique gobj NOT FOUND",
-                    "unique",       "%s", dst,
-                    NULL
-                );
-            } else {
-                gobj_send_event(dst_gobj, event, 0, gobj);
-                SetFocus(priv->gobj_editline);
-            }
-        } else {
-            gobj_send_event(GetFocus(), event, 0, gobj);
-        }
-        return 0;
-    }
-
     if(kb >= 0x20 && kb <= 0x7f) {
         json_t *kw_char = json_pack("{s:i}",
             "char", kb
@@ -1799,6 +1770,177 @@ PRIVATE int process_key(hgobj gobj, int kb)
     }
 
     return 0;
+}
+
+/***************************************************************************
+ *  on alloc callback
+ ***************************************************************************/
+PRIVATE void on_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
+{
+    hgobj gobj = handle->data;
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    growbf_ensure_size(&priv->bfinput, suggested_size);
+    buf->base = priv->bfinput.bf;
+    buf->len = priv->bfinput.allocated;
+}
+
+/***************************************************************************
+ *  on read callback
+ ***************************************************************************/
+PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
+{
+    hgobj gobj = stream->data;
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    if(gobj_trace_level(gobj) & TRACE_UV) {
+        trace_msg("<<< on_read_cb %d tcp p=%p",
+            nread,
+            &priv->uv_tty
+        );
+    }
+
+    if(nread < 0) {
+        if(nread == UV_ECONNRESET) {
+            log_info(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
+                "msg",          "%s", "Connection Reset",
+                NULL
+            );
+        } else if(nread == UV_EOF) {
+            log_info(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "msgset",       "%s", MSGSET_CONNECT_DISCONNECT,
+                "msg",          "%s", "EOF",
+                NULL
+            );
+        } else {
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_LIBUV_ERROR,
+                "msg",          "%s", "read FAILED",
+                "uv_error",     "%s", uv_err_name(nread),
+                NULL
+            );
+        }
+        if(gobj_is_running(gobj)) {
+            gobj_stop(gobj); // auto-stop
+        }
+        return;
+    }
+
+    if(nread == 0) {
+        // Yes, sometimes arrive with nread 0.
+        return;
+    }
+
+    if(gobj_trace_level(gobj) & TRACE_UV) {
+        log_debug_dump(
+            0,
+            buf->base,
+            nread,
+            ""
+        );
+    }
+
+    if((buf->base[0] <= 0x1B && nread <= 8) || buf->base[0] == 0x7F) {
+        if(buf->base[0] == 3) {
+            gobj_stop(gobj);
+            return;
+        }
+
+        unsigned char b[8];
+        memset(b, 0, sizeof(b));
+        memmove(b, buf->base, nread);
+
+        struct keytable_s *kt = event_by_key(*((uint64_t *)b));
+        if(!kt) {
+            return;
+        }
+        const char *dst = kt->dst_gobj;
+        const char *event = kt->event;
+
+        if(!empty_string(event)) {
+            if(strcmp(event, "EV_EDITLINE_DEL_LINE")==0) {
+                msg2statusline(gobj, 0, "");
+            }
+
+            if(!empty_string(dst)) {
+                hgobj dst_gobj;
+                if(strcmp(dst, "__top_display_window__")==0) {
+                    dst_gobj = __top_display_window__;
+                } else {
+                    dst_gobj = gobj_find_unique_gobj(dst, FALSE);
+                }
+                if(!dst_gobj) {
+                    log_error(0,
+                        "gobj",         "%s", gobj_full_name(gobj),
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                        "msg",          "%s", "unique gobj NOT FOUND",
+                        "unique",       "%s", dst,
+                        NULL
+                    );
+                } else {
+                    gobj_send_event(dst_gobj, event, 0, gobj);
+                    SetFocus(priv->gobj_editline);
+                }
+            } else {
+                gobj_send_event(GetFocus(), event, 0, gobj);
+            }
+            return;
+        }
+
+    } else {
+        for(int i=0; i<nread; i++) {
+            process_key(gobj, buf->base[i]);
+        }
+    }
+}
+
+/***************************************************************************
+ *  Only NOW you can destroy this gobj,
+ *  when uv has released the handler.
+ ***************************************************************************/
+PRIVATE void on_close_cb(uv_handle_t* handle)
+{
+    hgobj gobj = handle->data;
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    if(gobj_trace_level(gobj) & TRACE_UV) {
+        trace_msg("<<< on_close_cb tcp0 p=%p", &priv->uv_tty);
+    }
+    priv->uv_handler_active = 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE void do_close(hgobj gobj)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    if(!priv->uv_handler_active) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_OPERATIONAL_ERROR,
+            "msg",          "%s", "UV handler NOT ACTIVE!",
+            NULL
+        );
+        return;
+    }
+    if(priv->uv_read_active) {
+        uv_read_stop((uv_stream_t *)&priv->uv_tty);
+        priv->uv_read_active = 0;
+    }
+
+    if(gobj_trace_level(gobj) & TRACE_UV) {
+        trace_msg(">>> uv_close tcp p=%p", &priv->uv_tty);
+    }
+    uv_close((uv_handle_t *)&priv->uv_tty, on_close_cb);
 }
 
 /***************************************************************************

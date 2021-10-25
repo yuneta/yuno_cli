@@ -149,6 +149,7 @@ int main(int argc, char *argv[])
         } else if(strcmp(argv[1], "verbose3")==0) {
             gobj_set_gobj_trace(0, "machine", TRUE, 0);
             gobj_set_gobj_trace(0, "ev_kw", TRUE, 0);
+            gobj_set_gobj_trace(0, "libuv", TRUE, 0);
             gobj_set_gobj_trace(0, "machine", TRUE, 0);
             gobj_set_gclass_trace(GCLASS_IEVENT_CLI, "ievents2", TRUE);
             gobj_set_gobj_trace(0, "ev_kw", TRUE, 0);
