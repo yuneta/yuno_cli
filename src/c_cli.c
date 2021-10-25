@@ -2262,15 +2262,18 @@ PRIVATE int ac_next_window(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE int ac_on_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
+    static int n = 0;
+
     const char *agent_name = kw_get_str(kw, "remote_yuno_name", 0, 0); // remote agent name
-    char temp[80];
+    char temp[NAME_MAX];
 
     /*
      *  Create display window of external agent
      */
     hgobj wn_disp = get_display_window(gobj, agent_name);
     if(wn_disp) {
-        snprintf(temp, sizeof(temp), "%s+", agent_name);
+        n++;
+        snprintf(temp, sizeof(temp), "%s-%d", agent_name, n);
         agent_name = temp;
     }
 
