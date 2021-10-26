@@ -154,7 +154,9 @@ int main(int argc, char *argv[])
             gobj_set_gclass_trace(GCLASS_IEVENT_CLI, "ievents2", TRUE);
             gobj_set_gobj_trace(0, "ev_kw", TRUE, 0);
             gobj_set_gobj_trace(0, "subscriptions", TRUE, 0);
+            gobj_set_gobj_trace(0, "create_delete", TRUE, 0);
             gobj_set_gobj_trace(0, "create_delete2", TRUE, 0);
+            gobj_set_gobj_trace(0, "start_stop", TRUE, 0);
             argc = 1;
         } else if(strcmp(argv[1], "verbose")==0) {
             gobj_set_gclass_trace(GCLASS_IEVENT_CLI, "ievents2", TRUE);

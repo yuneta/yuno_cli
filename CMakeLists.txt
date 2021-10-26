@@ -17,7 +17,6 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
 
   # TEST para probar en kdevelop
 #   add_definitions(-DTEST_KDEVELOP)
-#   add_definitions(-DTEST_KDEVELOP_KB)
   # TEST para probar en kdevelop
 
   option(SHOWNOTES "Show preprocessor notes" OFF)
@@ -64,6 +63,7 @@ SET (YUNO_SRCS
     src/c_wn_list.c
     src/c_wn_toolbar.c
     src/c_wn_static.c
+    src/c_wn_tty_mirror.c
 )
 SET (YUNO_HDRS
     src/yuno_yuneta_cli.h
@@ -76,6 +76,7 @@ SET (YUNO_HDRS
     src/c_wn_list.h
     src/c_wn_toolbar.h
     src/c_wn_static.h
+    src/c_wn_tty_mirror.h
 )
 
 ##############################################

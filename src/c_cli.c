@@ -17,110 +17,57 @@
 /***************************************************************************
  *              Constants
  ***************************************************************************/
-enum {
-    CTRL_A = 1,
-    CTRL_B = 2,
-    CTRL_D = 4,
-    CTRL_E = 5,
-    CTRL_F = 6,
-    CTRL_H = 8,
-    BACKSPACE =  127,
-    BACKSPACE2 = 0177,
-    TAB = 9,
-    CTRL_K = 11,
-    ENTER = 10,
-    CTRL_N = 14,
-    CTRL_P = 16,
-    CTRL_T = 20,
-    CTRL_U = 21,
-    CTRL_W = 23,
-    CTRL_Y = 25,
+#define CTRL_A  {1}
+#define CTRL_B  {2}
+#define CTRL_C  {3}
 
-    CTRL_START = 01027,
-    CTRL_PPAGE = 01053,
-    CTRL_NPAGE = 01046,
-    CTRL_END = 01022,
+#define CTRL_D  {4}
+#define CTRL_E  {5}
+#define CTRL_F  {6}
+#define CTRL_H  {8}
+#define BACKSPACE {0x7F}
+#define TAB     {9}
+#define CTRL_K  {11}
+#define ENTER   {13}
+#define CTRL_N  {14}
+#define CTRL_P  {16}
+#define CTRL_T  {20}
+#define CTRL_U  {21}
+#define CTRL_W  {23}
+#define CTRL_Y  {25}
+#define ESCAPE  {27}
 
-    CTRL_START2 = 01031,
-    CTRL_PPAGE2 = 01055,
-    CTRL_NPAGE2 = 01050,
-    CTRL_END2 = 01024,
+#define MKEY_START              {0x1B, 0x5B, 0x48} // .[H
+#define MKEY_END                {0x1B, 0x5B, 0x46} // .[F
+#define MKEY_UP                 {0x1B, 0x5B, 0x41} // .[A
+#define MKEY_DOWN               {0x1B, 0x5B, 0x42} // .[B
+#define MKEY_LEFT               {0x1B, 0x5B, 0x44} // .[D
+#define MKEY_RIGHT              {0x1B, 0x5B, 0x43} // .[C
 
-    ALT_LEFT = 01037,
-    ALT_RIGHT = 01056,
+#define MKEY_PREV_PAGE          {0x1B, 0x5B, 0x35, 0x7E} // .[5~
+#define MKEY_NEXT_PAGE          {0x1B, 0x5B, 0x36, 0x7E} // .[6~
+#define MKEY_INS                {0x1B, 0x5B, 0x32, 0x7E} // .[2~
+#define MKEY_DEL                {0x1B, 0x5B, 0x33, 0x7E} // .[3~
 
-    ALT_LEFT2 = 01041,
-    ALT_RIGHT2 = 01060,
+#define MKEY_START2             {0x1B, 0x4F, 0x48} // .[H
+#define MKEY_END2               {0x1B, 0x4F, 0x46} // .[F
+#define MKEY_UP2                {0x1B, 0x4F, 0x41} // .OA
+#define MKEY_DOWN2              {0x1B, 0x4F, 0x42} // .OB
+#define MKEY_LEFT2              {0x1B, 0x4F, 0x44} // .OD
+#define MKEY_RIGHT2             {0x1B, 0x4F, 0x43} // .OC
 
-    CTRL_LEFT = 01043,
-    CTRL_RIGHT = 01062,
-    CTRL_UP = 01070,
-    CTRL_DOWN = 01017,
+#define MKEY_ALT_START          {0x1B, 0x5B, 0x31, 0x3B, 0x33, 0x48} // .[1;3H
+#define MKEY_ALT_PREV_PAGE      {0x1B, 0x5B, 0x35, 0x3B, 0x33, 0x7E} // .[5;3~
+#define MKEY_ALT_NEXT_PAGE      {0x1B, 0x5B, 0x36, 0x3B, 0x33, 0x7E} // .[6;3~
+#define MKEY_ALT_END            {0x1B, 0x5B, 0x31, 0x3B, 0x33, 0x46} // .[1;3F
 
-    CTRL_LEFT2 = 0611,
-    CTRL_RIGHT2 = 0622,
-    CTRL_UP2 = 0521,
-    CTRL_DOWN2 = 0520,
+#define MKEY_CTRL_START         {0x1B, 0x5B, 0x31, 0x3B, 0x35, 0x48} // .[1;5H
+#define MKEY_CTRL_END           {0x1B, 0x5B, 0x31, 0x3B, 0x35, 0x46} // .[1;5F
 
-};
-
-struct keytable_s {
-    const char *dst_gobj;
-    const char *event;
-    unsigned long long key;
-} keytable[] = {
-{"editline",        "EV_EDITLINE_MOVE_START",       CTRL_A},
-{"editline",        "EV_EDITLINE_MOVE_START",       KEY_HOME},
-{"editline",        "EV_EDITLINE_MOVE_END",         CTRL_E},
-{"editline",        "EV_EDITLINE_MOVE_END",         KEY_END},
-{"editline",        "EV_EDITLINE_MOVE_LEFT",        CTRL_B},
-{"editline",        "EV_EDITLINE_MOVE_LEFT",        KEY_LEFT},
-{"editline",        "EV_EDITLINE_MOVE_RIGHT",       CTRL_F},
-{"editline",        "EV_EDITLINE_MOVE_RIGHT",       KEY_RIGHT},
-{"editline",        "EV_EDITLINE_DEL_CHAR",         CTRL_D},
-{"editline",        "EV_EDITLINE_DEL_CHAR",         KEY_DC},
-{"editline",        "EV_EDITLINE_BACKSPACE",        CTRL_H},
-{"editline",        "EV_EDITLINE_BACKSPACE",        BACKSPACE2},
-{"editline",        "EV_EDITLINE_BACKSPACE",        KEY_BACKSPACE},
-{"editline",        "EV_EDITLINE_COMPLETE_LINE",    TAB},
-//{"editline",        "EV_EDITLINE_DEL_EOL",          CTRL_K},
-{"editline",        "EV_EDITLINE_ENTER",            ENTER},
-{"editline",        "EV_EDITLINE_ENTER",            KEY_ENTER},
-{"editline",        "EV_EDITLINE_PREV_HIST",        KEY_UP},
-{"editline",        "EV_EDITLINE_NEXT_HIST",        KEY_DOWN},
-{"editline",        "EV_EDITLINE_SWAP_CHAR",        CTRL_T},
-{"editline",        "EV_EDITLINE_DEL_LINE",         CTRL_U},
-{"editline",        "EV_EDITLINE_DEL_LINE",         CTRL_Y},
-{"editline",        "EV_EDITLINE_DEL_PREV_WORD",    CTRL_W},
-
-{"__top_display_window__",  "EV_CLRSCR",                    CTRL_K},
-
-{"__top_display_window__",  "EV_SCROLL_LINE_UP",            CTRL_PPAGE},
-{"__top_display_window__",  "EV_SCROLL_LINE_DOWN",          CTRL_NPAGE},
-{"__top_display_window__",  "EV_SCROLL_LINE_UP",            CTRL_PPAGE2},
-{"__top_display_window__",  "EV_SCROLL_LINE_DOWN",          CTRL_NPAGE2},
-
-{"__top_display_window__",  "EV_SCROLL_PAGE_UP",            KEY_PPAGE},
-{"__top_display_window__",  "EV_SCROLL_PAGE_DOWN",          KEY_NPAGE},
-
-{"__top_display_window__",  "EV_SCROLL_TOP",                CTRL_START2},
-{"__top_display_window__",  "EV_SCROLL_BOTTOM",             CTRL_END2},
-{"__top_display_window__",  "EV_SCROLL_TOP",                CTRL_START},
-{"__top_display_window__",  "EV_SCROLL_BOTTOM",             CTRL_END},
-
-{"cli",             "EV_PREVIOUS_WINDOW",           ALT_LEFT2},
-{"cli",             "EV_NEXT_WINDOW",               ALT_RIGHT2},
-{"cli",             "EV_PREVIOUS_WINDOW",           ALT_LEFT},
-{"cli",             "EV_NEXT_WINDOW",               ALT_RIGHT},
-{"cli",             "EV_PREVIOUS_WINDOW",           CTRL_LEFT},
-{"cli",             "EV_NEXT_WINDOW",               CTRL_RIGHT},
-{"cli",             "EV_PREVIOUS_WINDOW",           CTRL_LEFT2},
-{"cli",             "EV_NEXT_WINDOW",               CTRL_RIGHT2},
-{"cli",             "EV_PREVIOUS_WINDOW",           CTRL_P},
-{"cli",             "EV_NEXT_WINDOW",               CTRL_N},
-
-{0}
-};
+#define MKEY_ALT_LEFT           {0x1B, 0x5B, 0x31, 0x3B, 0x33, 0x44} // .[1;3D
+#define MKEY_CTRL_LEFT          {0x1B, 0x5B, 0x31, 0x3B, 0x35, 0x44} // .[1;5D
+#define MKEY_ALT_RIGHT          {0x1B, 0x5B, 0x31, 0x3B, 0x33, 0x43} // .[1;3C
+#define MKEY_CTRL_RIGHT         {0x1B, 0x5B, 0x31, 0x3B, 0x35, 0x43} // .[1;5C
 
 /***************************************************************************
  *              Structures
@@ -139,6 +86,9 @@ PRIVATE void do_close(hgobj gobj);
 PRIVATE hgobj create_display_window(hgobj gobj, const char* name, json_t* kw_display_window);
 PRIVATE hgobj get_display_window(hgobj gobj, const char *name);
 PRIVATE int destroy_display_window(hgobj gobj, const char *name);
+PRIVATE hgobj create_tty_mirror_window(hgobj gobj, const char* name, json_t* kw_tty_mirror_window);
+PRIVATE hgobj get_tty_mirror_window(hgobj gobj, const char *name);
+PRIVATE int destroy_tty_mirror_window(hgobj gobj, const char *name);
 PRIVATE hgobj create_static(hgobj gobj, const char* name, json_t* kw_static);
 PRIVATE int destroy_static(hgobj gobj, const char *name);
 PRIVATE int set_top_window(hgobj gobj, const char *name);
@@ -151,6 +101,58 @@ PRIVATE char *get_history_file(char *bf, int bfsize);
  *          Data: config, public data, private data
  ***************************************************************************/
 hgobj __top_display_window__ = 0;
+
+struct keytable_s {
+    const char *dst_gobj;
+    const char *event;
+    uint8_t keycode[8+1];
+} keytable[] = {
+{"editline",    "EV_EDITLINE_MOVE_START",       CTRL_A},
+{"editline",    "EV_EDITLINE_MOVE_START",       MKEY_START},
+{"editline",    "EV_EDITLINE_MOVE_START",       MKEY_START2},
+{"editline",    "EV_EDITLINE_MOVE_END",         CTRL_E},
+{"editline",    "EV_EDITLINE_MOVE_END",         MKEY_END},
+{"editline",    "EV_EDITLINE_MOVE_END",         MKEY_END2},
+{"editline",    "EV_EDITLINE_MOVE_LEFT",        CTRL_B},
+{"editline",    "EV_EDITLINE_MOVE_LEFT",        MKEY_LEFT},
+{"editline",    "EV_EDITLINE_MOVE_LEFT",        MKEY_LEFT2},
+{"editline",    "EV_EDITLINE_MOVE_RIGHT",       CTRL_F},
+{"editline",    "EV_EDITLINE_MOVE_RIGHT",       MKEY_RIGHT},
+{"editline",    "EV_EDITLINE_MOVE_RIGHT",       MKEY_RIGHT2},
+{"editline",    "EV_EDITLINE_DEL_CHAR",         CTRL_D},
+{"editline",    "EV_EDITLINE_DEL_CHAR",         MKEY_DEL},
+{"editline",    "EV_EDITLINE_BACKSPACE",        CTRL_H},
+{"editline",    "EV_EDITLINE_BACKSPACE",        BACKSPACE},
+{"editline",    "EV_EDITLINE_COMPLETE_LINE",    TAB},
+{"editline",    "EV_EDITLINE_ENTER",            ENTER},
+{"editline",    "EV_EDITLINE_PREV_HIST",        MKEY_UP},
+{"editline",    "EV_EDITLINE_PREV_HIST",        MKEY_UP2},
+{"editline",    "EV_EDITLINE_NEXT_HIST",        MKEY_DOWN},
+{"editline",    "EV_EDITLINE_NEXT_HIST",        MKEY_DOWN2},
+{"editline",    "EV_EDITLINE_SWAP_CHAR",        CTRL_T},
+{"editline",    "EV_EDITLINE_DEL_LINE",         CTRL_U},
+{"editline",    "EV_EDITLINE_DEL_LINE",         CTRL_Y},
+{"editline",    "EV_EDITLINE_DEL_PREV_WORD",    CTRL_W},
+
+{"__top_display_window__",  "EV_CLRSCR",                    CTRL_K},
+
+{"__top_display_window__",  "EV_SCROLL_PAGE_UP",            MKEY_PREV_PAGE},
+{"__top_display_window__",  "EV_SCROLL_PAGE_DOWN",          MKEY_NEXT_PAGE},
+
+{"__top_display_window__",  "EV_SCROLL_LINE_UP",            MKEY_ALT_PREV_PAGE},
+{"__top_display_window__",  "EV_SCROLL_LINE_DOWN",          MKEY_ALT_NEXT_PAGE},
+{"__top_display_window__",  "EV_SCROLL_TOP",                MKEY_CTRL_START},
+{"__top_display_window__",  "EV_SCROLL_BOTTOM",             MKEY_CTRL_END},
+
+{"cli",             "EV_PREVIOUS_WINDOW",           MKEY_ALT_LEFT},
+{"cli",             "EV_PREVIOUS_WINDOW",           MKEY_CTRL_LEFT},
+{"cli",             "EV_PREVIOUS_WINDOW",           CTRL_P},
+{"cli",             "EV_NEXT_WINDOW",               MKEY_ALT_RIGHT},
+{"cli",             "EV_NEXT_WINDOW",               MKEY_CTRL_RIGHT},
+{"cli",             "EV_NEXT_WINDOW",               CTRL_N},
+
+{0}
+};
 
 PRIVATE json_t *cmd_help(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
 PRIVATE json_t *cmd_quit(hgobj gobj, const char *cmd, json_t *kw, hgobj src);
@@ -442,9 +444,6 @@ PRIVATE int mt_start(hgobj gobj)
     set_top_window(gobj, "console");
 
 #ifdef TEST_KDEVELOP_DIE
-        set_timeout(priv->timer, 1000);
-#endif
-#ifdef TEST_KDEVELOP_KB
         set_timeout(priv->timer, 1000);
 #endif
     return 0;
@@ -1433,6 +1432,57 @@ PRIVATE int destroy_display_window(hgobj gobj, const char *name)
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE hgobj create_tty_mirror_window(hgobj gobj, const char *name, json_t *kw_tty_mirror_window)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    if(!kw_tty_mirror_window) {
+        kw_tty_mirror_window = json_pack(
+            "{s:s, s:s}",
+            "bg_color", "black",
+            "fg_color", "white"
+        );
+    }
+    hgobj wn_display = gobj_create(
+        name,
+        GCLASS_WN_LIST,
+        kw_tty_mirror_window,
+        priv->gobj_workareabox
+    );
+    gobj_start(wn_display);
+
+    return wn_display;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE hgobj get_tty_mirror_window(hgobj gobj, const char* name)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    hgobj gobj_display = gobj_child_by_name(priv->gobj_workareabox, name, 0);
+    return gobj_display;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int destroy_tty_mirror_window(hgobj gobj, const char *name)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    gobj_destroy_named_childs(
+        priv->gobj_workareabox,
+        name
+    );
+
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PRIVATE hgobj create_static(hgobj gobj, const char *name, json_t *kw_static)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -1747,10 +1797,10 @@ PRIVATE int msg2statusline(hgobj gobj, BOOL error, const char *fmt, ...)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE struct keytable_s *event_by_key(int kb)
+PRIVATE struct keytable_s *event_by_key(uint8_t kb[8])
 {
     for(int i=0; keytable[i].event!=0; i++) {
-        if(kb == keytable[i].key) {
+        if(memcmp(kb, keytable[i].keycode, strlen((const char *)keytable[i].keycode))==0) {
             return &keytable[i];
         }
     }
@@ -1836,7 +1886,7 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
         return;
     }
 
-    if(gobj_trace_level(gobj) & TRACE_UV) {
+    if(gobj_trace_level(gobj) & (TRACE_UV|TRACE_KB)) {
         log_debug_dump(
             0,
             buf->base,
@@ -1845,20 +1895,32 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
         );
     }
 
+    hgobj gobj_focus = GetFocus();
+    if(gobj_typeof_gclass(gobj_focus, "GCLASS_WN_TTY_NAME")) {
+        GBUFFER *gbuf = gbuf_create(nread, nread, 0, 0);
+        gbuf_append(gbuf, buf->base, nread);
+        json_t *kw_tty = json_pack("{s:I}",
+            "gbuffer", (json_int_t)(size_t)gbuf
+        );
+        gobj_send_event(gobj_focus, "EV_WRITE_TTY", kw_tty, gobj);
+
+        return;
+    }
+
     if((buf->base[0] <= 0x1B && nread <= 8) || buf->base[0] == 0x7F) {
         if(buf->base[0] == 3) {
-            gobj_stop(gobj);
+            gobj_shutdown();
             return;
         }
 
-        unsigned char b[8];
+        uint8_t b[8];
         memset(b, 0, sizeof(b));
         memmove(b, buf->base, nread);
-
-        struct keytable_s *kt = event_by_key(*((uint64_t *)b));
+        struct keytable_s *kt = event_by_key(b);
         if(!kt) {
             return;
         }
+
         const char *dst = kt->dst_gobj;
         const char *event = kt->event;
 
@@ -1941,43 +2003,6 @@ PRIVATE void do_close(hgobj gobj)
         trace_msg(">>> uv_close tcp p=%p", &priv->uv_tty);
     }
     uv_close((uv_handle_t *)&priv->uv_tty, on_close_cb);
-}
-
-/***************************************************************************
- *  on poll callback
- ***************************************************************************/
-PRIVATE void on_poll_cb(uv_poll_t *req, int status, int events)
-{
-    hgobj gobj = req->data;
-
-    if(status < 0) {
-        log_error(0,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_LIBUV_ERROR,
-            "msg",          "%s", "read FAILED",
-            "uv_error",     "%s", uv_err_name(status),
-            NULL
-        );
-        //toclose(gobj, TRUE);
-        return;
-    }
-    if (events & UV_READABLE) {
-#ifdef TEST_KDEVELOP_KB
-        int kb = 0;
-        if(read(STDIN_FILENO, &kb, 1)==1) {
-            //log_debug_printf(0, "kb x%X", kb);
-            process_key(gobj, kb);
-        }
-#else
-        int kb = 0;
-        kb = getch();
-        if(gobj_trace_level(gobj) & TRACE_KB) {
-            log_debug_printf(0, "kb 0%o", kb);
-        }
-        process_key(gobj, kb);
-#endif
-    }
 }
 
 /***************************************************************************
@@ -2478,10 +2503,10 @@ PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
     // Delete tty's
     json_t *consoles = gobj_kw_get_user_data(src, "consoles", 0, KW_EXTRACT);
     if(consoles) {
-        const char *window_tty_name; json_t *jn_;
-        json_object_foreach(consoles, window_tty_name, jn_) {
-            destroy_static(gobj, window_tty_name);
-            destroy_display_window(gobj, window_tty_name);
+        const char *window_tty_mirror_name; json_t *jn_;
+        json_object_foreach(consoles, window_tty_mirror_name, jn_) {
+            destroy_static(gobj, window_tty_mirror_name);
+            destroy_display_window(gobj, window_tty_mirror_name);
         }
         json_decref(consoles);
     }
@@ -2932,15 +2957,9 @@ PRIVATE int ac_on_token(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-#ifdef TEST_KDEVELOP_KB
-        char msg[] = "authenticate auth_url=https://login.miyuneta.es:8642/auth/ auth_owner=mulesol realm_role=yunetacontrol user_id=ginsmar@gmail.com user_passw=\n";
-        for(int i=0; i<strlen(msg); i++) {
-            process_key(gobj, msg[i]);
-        }
-#else
-        gobj_set_yuno_must_die();
+#ifdef TEST_KDEVELOP_DIE
+    gobj_set_yuno_must_die();
 #endif
-
     KW_DECREF(kw);
     return 0;
 }
@@ -2948,20 +2967,20 @@ PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int ac_tty_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
+PRIVATE int ac_tty_mirror_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     const char *agent_name = gobj_name(gobj_read_pointer_attr(src, "user_data"));
     const char *tty_name = kw_get_str(kw, "data`name", 0, 0);
-    char window_tty_name[NAME_MAX];
-    snprintf(window_tty_name, sizeof(window_tty_name), "%s(%s)", agent_name, tty_name);
+    char window_tty_mirror_name[NAME_MAX];
+    snprintf(window_tty_mirror_name, sizeof(window_tty_mirror_name), "%s(%s)", agent_name, tty_name);
 
     /*
      *  Create display window of external agent
      */
-    hgobj wn_tty_disp = create_display_window(gobj, window_tty_name, 0);
-    if(wn_tty_disp) {
+    hgobj wn_tty_mirror_disp = create_tty_mirror_window(gobj, window_tty_mirror_name, 0);
+    if(wn_tty_mirror_disp) {
         char name_[NAME_MAX+20];
-        snprintf(name_, sizeof(name_), "consoles`%s", window_tty_name);
+        snprintf(name_, sizeof(name_), "consoles`%s", window_tty_mirror_name);
         gobj_kw_get_user_data( // save in input gate
             src,
             name_,
@@ -2972,8 +2991,8 @@ PRIVATE int ac_tty_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
         /*
          *  Create button window of console (right now implemented as static window)
          */
-        create_static(gobj, window_tty_name, 0);
-        set_top_window(gobj, window_tty_name);
+        create_static(gobj, window_tty_mirror_name, 0);
+        set_top_window(gobj, window_tty_mirror_name);
     }
 
     KW_DECREF(kw);
@@ -2983,7 +3002,7 @@ PRIVATE int ac_tty_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int ac_tty_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
+PRIVATE int ac_tty_mirror_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
@@ -2994,11 +3013,11 @@ PRIVATE int ac_tty_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
 
     const char *agent_name = gobj_name(gobj_read_pointer_attr(src, "user_data"));
     const char *tty_name = kw_get_str(kw, "data`name", 0, 0);
-    char window_tty_name[NAME_MAX];
-    snprintf(window_tty_name, sizeof(window_tty_name), "%s(%s)", agent_name, tty_name);
+    char window_tty_mirror_name[NAME_MAX];
+    snprintf(window_tty_mirror_name, sizeof(window_tty_mirror_name), "%s(%s)", agent_name, tty_name);
 
-    hgobj wn_tty_disp = get_display_window(gobj, window_tty_name);
-    if(wn_tty_disp) {
+    hgobj wn_tty_mirror_disp = get_tty_mirror_window(gobj, window_tty_mirror_name);
+    if(wn_tty_mirror_disp) {
         char name_[NAME_MAX];
         snprintf(name_, sizeof(name_), "consoles`%s", tty_name);
         json_decref(gobj_kw_get_user_data( // delete in input gate
@@ -3008,18 +3027,12 @@ PRIVATE int ac_tty_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
             KW_EXTRACT
         ));
 
-        destroy_static(gobj, window_tty_name);
-        destroy_display_window(gobj, window_tty_name);
+        destroy_static(gobj, window_tty_mirror_name);
+        destroy_tty_mirror_window(gobj, window_tty_mirror_name);
     }
 
     set_top_window(gobj, agent_name);
     SetFocus(priv->gobj_editline);
-
-    // No puedo parar y destruir con libuv.
-    // De momento conexiones indestructibles, destruibles solo con la salida del yuno.
-    // Hasta que quite la dependencia de libuv. FUTURE
-    //gobj_stop_tree(src);
-    //gobj_destroy(tree);
 
     KW_DECREF(kw);
     return 0;
@@ -3028,7 +3041,7 @@ PRIVATE int ac_tty_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int ac_tty_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
+PRIVATE int ac_tty_mirror_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     // TODO
     KW_DECREF(kw);
@@ -3088,9 +3101,9 @@ PRIVATE EV_ACTION ST_IDLE[] = {
     {"EV_READ_JSON",                ac_read_json,               0},
     {"EV_READ_FILE",                ac_read_file,               0},
     {"EV_READ_BINARY_FILE",         ac_read_binary_file,        0},
-    {"EV_TTY_OPEN",                 ac_tty_open,                0},
-    {"EV_TTY_CLOSE",                ac_tty_close,               0},
-    {"EV_TTY_DATA",                 ac_tty_data,                0},
+    {"EV_TTY_OPEN",                 ac_tty_mirror_open,         0},
+    {"EV_TTY_CLOSE",                ac_tty_mirror_close,        0},
+    {"EV_TTY_DATA",                 ac_tty_mirror_data,         0},
     {"EV_ON_TOKEN",                 ac_on_token,                0},
     {"EV_TIMEOUT",                  ac_timeout,                 0},
     {"EV_STOPPED",                  0,                          0},
