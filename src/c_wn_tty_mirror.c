@@ -313,6 +313,72 @@ PRIVATE void setcolor(hgobj gobj, line_t *line)
     }
 }
 
+/***************************************************************************
+ *  Write data to pseudo terminal
+ ***************************************************************************/
+PRIVATE int write_data_to_pty(hgobj gobj, GBUFFER *gbuf)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+//     if(priv->uv_req_write_active) {
+//         log_error(LOG_OPT_TRACE_STACK,
+//             "gobj",         "%s", gobj_full_name(gobj),
+//             "function",     "%s", __FUNCTION__,
+//             "msgset",       "%s", MSGSET_OPERATIONAL_ERROR,
+//             "msg",          "%s", "uv_req_write ALREADY ACTIVE",
+//             NULL
+//         );
+//         gbuf_decref(gbuf);
+//         return -1;
+//     }
+//
+//     priv->uv_req_write_active = 1;
+//     priv->uv_req_write.data = gobj;
+//
+//     size_t ln = gbuf_chunk(gbuf); // TODO y si ln es 0??????????
+//
+//     char *bf = gbuf_get(gbuf, ln);
+//     uv_buf_t b[] = {
+//         { .base = bf, .len = ln}
+//     };
+//     uint32_t trace = gobj_trace_level(gobj);
+//     if((trace & TRACE_UV)) {
+//         trace_msg(">>> uv_write pty p=%p, send %d\n", (uv_stream_t *)&priv->uv_in, ln);
+//     }
+//     int ret = uv_write(
+//         &priv->uv_req_write,
+//         (uv_stream_t*)&priv->uv_in,
+//         b,
+//         1,
+//         on_write_cb
+//     );
+//     if(ret < 0) {
+//         log_error(0,
+//             "gobj",         "%s", gobj_full_name(gobj),
+//             "function",     "%s", __FUNCTION__,
+//             "msgset",       "%s", MSGSET_LIBUV_ERROR,
+//             "msg",          "%s", "uv_write FAILED",
+//             "uv_error",     "%s", uv_err_name(ret),
+//             "ln",           "%d", ln,
+//             NULL
+//         );
+//         if(gobj_is_running(gobj)) {
+//             gobj_stop(gobj); // auto-stop
+//         }
+//         return -1;
+//     }
+//     if((trace & TRACE_TRAFFIC)) {
+//         log_debug_dump(
+//             0,
+//             bf,
+//             ln,
+//             "WRITE to PTY %s",
+//             gobj_short_name(gobj)
+//         );
+//     }
+
+    return 0;
+}
 
 
 
@@ -335,106 +401,60 @@ PRIVATE int ac_paint(hgobj gobj, const char *event, json_t *kw, hgobj src)
         KW_DECREF(kw);
         return 0;
     }
-    wclear(priv->wn);
-
-    int n_lines = dl_size(&priv->dl_lines);
-    int n_win = priv->cy;
-    if(n_lines <= n_win) {
-        int y = n_win - n_lines;
-        line_t *line = dl_first(&priv->dl_lines);
-        for(int i=0; i < n_lines; i++) {
-            int ll = strlen(line->text);
-            if(ll > priv->cx) {
-                ll = priv->cx;
-            }
-            wmove(priv->wn, y+i, 0);
-            setcolor(gobj, line);
-            waddnstr(priv->wn, line->text, ll);
-            line = dl_next(line);
-        }
-    } else {
-        int y = 0;
-        int b = n_lines - priv->base - n_win + 1;
-        if(b < 1) {
-            b = 1;
-        }
-        //log_debug_printf(0, "n_lines %d, n_win %d, b %d, base %d", n_lines, n_win, b, priv->base);
-        line_t *line = dl_nfind(&priv->dl_lines, b);
-        if(!line) {
-            log_error(0,
-                "gobj",         "%s", gobj_full_name(gobj),
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-                "msg",          "%s", "no line",
-                "line",         "%d", b,
-                NULL
-            );
-        } else {
-            for(int i=0; i < n_win && line; i++) {
-                int ll = strlen(line->text);
-                if(ll > priv->cx) {
-                    ll = priv->cx;
-                }
-                wmove(priv->wn, y+i, 0);
-                setcolor(gobj, line);
-                waddnstr(priv->wn, line->text, ll);
-                line = dl_next(line);
-            }
-        }
-    }
-
-    if(priv->panel) {
-        update_panels();
-        doupdate();
-    } else if(priv->wn) {
-        wrefresh(priv->wn);
-    }
-
-    KW_DECREF(kw);
-    return 0;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE int ac_settext(hgobj gobj, const char *event, json_t *kw, hgobj src)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-    const char *text = kw_get_str(kw, "text", "", KW_REQUIRED);
-    const char *bg_color = kw_get_str(kw, "bg_color", 0, 0);
-    const char *fg_color = kw_get_str(kw, "fg_color", 0, 0);
-
-    int n_win = priv->cy;
-
-    if(strchr(text, '\n')) {
-        int len = strlen(text);
-        GBUFFER *gbuf = gbuf_create(len, len, 0, 0);
-        gbuf_append(gbuf, (void *)text, len);
-        if(gbuf) {
-            char *s;
-            while((s=gbuf_getline(gbuf, '\n'))) {
-                add_line(gobj, s, bg_color, fg_color);
-
-                int n_lines = dl_size(&priv->dl_lines);
-                if(n_lines > n_win && priv->base > n_win) {
-                    priv->base++;
-                }
-            }
-            gbuf_decref(gbuf);
-        }
-    } else {
-        add_line(gobj, text, bg_color, fg_color);
-
-        int n_lines = dl_size(&priv->dl_lines);
-        if(n_lines > n_win && priv->base > n_win) {
-            priv->base++;
-        }
-    }
-
-    while(priv->scroll_size > 0 && dl_size(&priv->dl_lines) > priv->scroll_size) {
-        delete_line(gobj, 1);
-    }
-    gobj_send_event(gobj, "EV_PAINT", 0, gobj);
+//     wclear(priv->wn);
+//
+//     int n_lines = dl_size(&priv->dl_lines);
+//     int n_win = priv->cy;
+//     if(n_lines <= n_win) {
+//         int y = n_win - n_lines;
+//         line_t *line = dl_first(&priv->dl_lines);
+//         for(int i=0; i < n_lines; i++) {
+//             int ll = strlen(line->text);
+//             if(ll > priv->cx) {
+//                 ll = priv->cx;
+//             }
+//             wmove(priv->wn, y+i, 0);
+//             setcolor(gobj, line);
+//             waddnstr(priv->wn, line->text, ll);
+//             line = dl_next(line);
+//         }
+//     } else {
+//         int y = 0;
+//         int b = n_lines - priv->base - n_win + 1;
+//         if(b < 1) {
+//             b = 1;
+//         }
+//         //log_debug_printf(0, "n_lines %d, n_win %d, b %d, base %d", n_lines, n_win, b, priv->base);
+//         line_t *line = dl_nfind(&priv->dl_lines, b);
+//         if(!line) {
+//             log_error(0,
+//                 "gobj",         "%s", gobj_full_name(gobj),
+//                 "function",     "%s", __FUNCTION__,
+//                 "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+//                 "msg",          "%s", "no line",
+//                 "line",         "%d", b,
+//                 NULL
+//             );
+//         } else {
+//             for(int i=0; i < n_win && line; i++) {
+//                 int ll = strlen(line->text);
+//                 if(ll > priv->cx) {
+//                     ll = priv->cx;
+//                 }
+//                 wmove(priv->wn, y+i, 0);
+//                 setcolor(gobj, line);
+//                 waddnstr(priv->wn, line->text, ll);
+//                 line = dl_next(line);
+//             }
+//         }
+//     }
+//
+//     if(priv->panel) {
+//         update_panels();
+//         doupdate();
+//     } else if(priv->wn) {
+//         wrefresh(priv->wn);
+//     }
 
     KW_DECREF(kw);
     return 0;
@@ -443,29 +463,14 @@ PRIVATE int ac_settext(hgobj gobj, const char *event, json_t *kw, hgobj src)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int ac_on_message(hgobj gobj, const char *event, json_t *kw, hgobj src)
+PRIVATE int ac_tty_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-    GBUFFER *gbuf = (GBUFFER *)(size_t)kw_get_int(kw, "gbuffer", 0, 0);
-    const char *bg_color = kw_get_str(kw, "bg_color", 0, 0);
-    const char *fg_color = kw_get_str(kw, "fg_color", 0, 0);
 
-    int n_win = priv->cy;
-
-    char *s;
-    while((s=gbuf_getline(gbuf, '\n'))) {
-        add_line(gobj, s, bg_color, fg_color);
-
-        int n_lines = dl_size(&priv->dl_lines);
-        if(n_lines > n_win && priv->base > n_win) {
-            priv->base++;
-        }
-    }
-
-    while(priv->scroll_size > 0 && dl_size(&priv->dl_lines) > priv->scroll_size) {
-        delete_line(gobj, 1);
-    }
-    gobj_send_event(gobj, "EV_PAINT", 0, gobj);
+    const char *content64 = kw_get_str(kw, "content64", 0, 0);
+    GBUFFER *gbuf = gbuf_decodebase64string(content64);
+    write_data_to_pty(gobj, gbuf);
+    gbuf_decref(gbuf);
 
     KW_DECREF(kw);
     return 0;
@@ -678,8 +683,7 @@ PRIVATE int ac_top(hgobj gobj, const char *event, json_t *kw, hgobj src)
  *                          FSM
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = {
-    {"EV_ON_MESSAGE",       0,  0,  0},
-    {"EV_SETTEXT",          0,  0,  0},
+    {"EV_TTY_DATA",          0,  0,  0},
     {"EV_PAINT",            0,  0,  0},
     {"EV_MOVE",             0,  0,  0},
     {"EV_SIZE",             0,  0,  0},
@@ -705,8 +709,7 @@ PRIVATE const char *state_names[] = {
 };
 
 PRIVATE EV_ACTION ST_IDLE[] = {
-    {"EV_ON_MESSAGE",       ac_on_message,          0},
-    {"EV_SETTEXT",          ac_settext,             0},
+    {"EV_TTY_DATA",         ac_tty_data,            0},
     {"EV_MOVE",             ac_move,                0},
     {"EV_SIZE",             ac_size,                0},
     {"EV_PAINT",            ac_paint,               0},

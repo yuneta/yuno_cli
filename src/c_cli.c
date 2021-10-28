@@ -3043,7 +3043,15 @@ PRIVATE int ac_tty_mirror_close(hgobj gobj, const char *event, json_t *kw, hgobj
  ***************************************************************************/
 PRIVATE int ac_tty_mirror_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    // TODO
+    const char *agent_name = gobj_name(gobj_read_pointer_attr(src, "user_data"));
+    const char *tty_name = kw_get_str(kw, "data`name", 0, 0);
+    char window_tty_mirror_name[NAME_MAX];
+    snprintf(window_tty_mirror_name, sizeof(window_tty_mirror_name), "%s(%s)", agent_name, tty_name);
+
+    hgobj wn_tty_mirror_disp = get_tty_mirror_window(gobj, window_tty_mirror_name);
+    if(wn_tty_mirror_disp) {
+        return gobj_send_event(wn_tty_mirror_disp, event, kw, src);
+    }
     KW_DECREF(kw);
     return 0;
 }
