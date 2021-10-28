@@ -64,6 +64,7 @@ SET (YUNO_SRCS
     src/c_wn_toolbar.c
     src/c_wn_static.c
     src/c_wn_tty_mirror.c
+    src/c_pty.c
 )
 SET (YUNO_HDRS
     src/yuno_yuneta_cli.h
@@ -77,6 +78,7 @@ SET (YUNO_HDRS
     src/c_wn_toolbar.h
     src/c_wn_static.h
     src/c_wn_tty_mirror.h
+    src/c_pty.h
 )
 
 ##############################################
@@ -107,6 +109,7 @@ TARGET_LINK_LIBRARIES(yuneta
     lzma        # used by libunwind
     z rt m
     uuid
+    util
 )
 
 

@@ -1445,7 +1445,7 @@ PRIVATE hgobj create_tty_mirror_window(hgobj gobj, const char *name, json_t *kw_
     }
     hgobj wn_display = gobj_create(
         name,
-        GCLASS_WN_LIST,
+        GCLASS_WN_TTY_MIRROR,
         kw_tty_mirror_window,
         priv->gobj_workareabox
     );
@@ -1462,6 +1462,16 @@ PRIVATE hgobj get_tty_mirror_window(hgobj gobj, const char* name)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     hgobj gobj_display = gobj_child_by_name(priv->gobj_workareabox, name, 0);
+    if(!gobj_display) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "gobj_child_by_name() FAILED",
+            "name",         "%s", name,
+            NULL
+        );
+    }
     return gobj_display;
 }
 
@@ -3044,14 +3054,21 @@ PRIVATE int ac_tty_mirror_close(hgobj gobj, const char *event, json_t *kw, hgobj
 PRIVATE int ac_tty_mirror_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     const char *agent_name = gobj_name(gobj_read_pointer_attr(src, "user_data"));
-    const char *tty_name = kw_get_str(kw, "data`name", 0, 0);
-    char window_tty_mirror_name[NAME_MAX];
-    snprintf(window_tty_mirror_name, sizeof(window_tty_mirror_name), "%s(%s)", agent_name, tty_name);
 
-    hgobj wn_tty_mirror_disp = get_tty_mirror_window(gobj, window_tty_mirror_name);
-    if(wn_tty_mirror_disp) {
-        return gobj_send_event(wn_tty_mirror_disp, event, kw, src);
+    json_t *jn_data = kw_get_dict(kw, "data", 0, KW_EXTRACT|KW_REQUIRED);
+    if(jn_data) {
+        const char *tty_name = kw_get_str(jn_data, "name", 0, 0);
+        char window_tty_mirror_name[NAME_MAX];
+        snprintf(window_tty_mirror_name, sizeof(window_tty_mirror_name), "%s(%s)", agent_name, tty_name);
+
+        hgobj wn_tty_mirror_disp = get_tty_mirror_window(gobj, window_tty_mirror_name);
+        if(wn_tty_mirror_disp) {
+            gobj_send_event(wn_tty_mirror_disp, event, jn_data, src);
+        } else {
+            json_decref(jn_data);
+        }
     }
+
     KW_DECREF(kw);
     return 0;
 }

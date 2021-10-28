@@ -19,13 +19,6 @@
 /***************************************************************************
  *              Structures
  ***************************************************************************/
-typedef struct line_s {
-    DL_ITEM_FIELDS
-
-    char *text;
-    char *bg_color;
-    char *fg_color;
-} line_t;
 
 /***************************************************************************
  *              Prototypes
@@ -79,8 +72,8 @@ typedef struct _PRIVATE_DATA {
     int32_t scroll_size;
     WINDOW *wn;     // ncurses window handler
     PANEL *panel;   // panel handler
+    hgobj gobj_console;
 
-    dl_list_t dl_lines;
     int32_t cx;
     int32_t cy;
     int32_t base;
@@ -148,8 +141,6 @@ PRIVATE void mt_create(hgobj gobj)
         );
     }
     //scrollok(priv->wn, true);
-
-    dl_init(&priv->dl_lines);
 }
 
 /***************************************************************************
@@ -175,7 +166,20 @@ PRIVATE void mt_writing(hgobj gobj, const char *path)
  ***************************************************************************/
 PRIVATE int mt_start(hgobj gobj)
 {
-    gobj_send_event(gobj, "EV_PAINT", 0, gobj);
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    /*
+     *  Create pseudoterminal
+     */
+    json_t *kw_pty = json_pack("{s:s}",
+        "process", "bash"
+        // TODO get and pass rows,cols
+    );
+    priv->gobj_console = gobj_create(gobj_name(gobj), GCLASS_PTY, kw_pty, gobj);
+    if(priv->gobj_console) {
+        gobj_set_volatil(priv->gobj_console, TRUE);
+    }
+
     gobj_start_childs(gobj);
     return 0;
 }
@@ -209,26 +213,6 @@ PRIVATE void mt_destroy(hgobj gobj)
     clrscr(gobj);
 }
 
-/***************************************************************************
- *      Framework Method play
- ***************************************************************************/
-PRIVATE int mt_play(hgobj gobj)
-{
-    gobj_change_state(gobj, "ST_IDLE");
-    // TODO re PAINT in enabled colors
-    return 0;
-}
-
-/***************************************************************************
- *      Framework Method pause
- ***************************************************************************/
-PRIVATE int mt_pause(hgobj gobj)
-{
-    gobj_change_state(gobj, "ST_DISABLED");
-    // TODO re PAINT in disabled colors
-    return 0;
-}
-
 
 
 
@@ -245,140 +229,10 @@ PRIVATE int mt_pause(hgobj gobj)
 PRIVATE int clrscr(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-    line_t *line;
-
-    while((line=dl_first(&priv->dl_lines))) {
-        dl_delete_item(line, 0);
-        GBMEM_FREE(line->bg_color);
-        GBMEM_FREE(line->fg_color);
-        GBMEM_FREE(line->text);
-        GBMEM_FREE(line);
-    }
 
     return 0;
 }
 
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE int delete_line(hgobj gobj, int n)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    line_t *line = dl_nfind(&priv->dl_lines,  n);
-    if(line) {
-        dl_delete_item(line, 0);
-        GBMEM_FREE(line->bg_color);
-        GBMEM_FREE(line->fg_color);
-        GBMEM_FREE(line->text);
-        GBMEM_FREE(line);
-    }
-    return 0;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE int add_line(hgobj gobj, const char *s, const char *bg_color, const char *fg_color)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    line_t *line = gbmem_malloc(sizeof(line_t));
-    line->text = gbmem_strdup(s);
-    line->bg_color = !empty_string(bg_color)?gbmem_strdup(bg_color):0;
-    line->fg_color = !empty_string(fg_color)?gbmem_strdup(fg_color):0;
-    return dl_add(&priv->dl_lines, line);
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE void setcolor(hgobj gobj, line_t *line)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    if(has_colors()) {
-        if(!empty_string(line->fg_color)) {
-            wbkgd(
-                priv->wn,
-                _get_curses_color(priv->fg_color, line->bg_color)
-            );
-        } else
-        if(!empty_string(priv->fg_color) && !empty_string(priv->bg_color)) {
-            wbkgd(
-                priv->wn,
-                _get_curses_color(priv->fg_color, priv->bg_color)
-            );
-        }
-    }
-}
-
-/***************************************************************************
- *  Write data to pseudo terminal
- ***************************************************************************/
-PRIVATE int write_data_to_pty(hgobj gobj, GBUFFER *gbuf)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-//     if(priv->uv_req_write_active) {
-//         log_error(LOG_OPT_TRACE_STACK,
-//             "gobj",         "%s", gobj_full_name(gobj),
-//             "function",     "%s", __FUNCTION__,
-//             "msgset",       "%s", MSGSET_OPERATIONAL_ERROR,
-//             "msg",          "%s", "uv_req_write ALREADY ACTIVE",
-//             NULL
-//         );
-//         gbuf_decref(gbuf);
-//         return -1;
-//     }
-//
-//     priv->uv_req_write_active = 1;
-//     priv->uv_req_write.data = gobj;
-//
-//     size_t ln = gbuf_chunk(gbuf); // TODO y si ln es 0??????????
-//
-//     char *bf = gbuf_get(gbuf, ln);
-//     uv_buf_t b[] = {
-//         { .base = bf, .len = ln}
-//     };
-//     uint32_t trace = gobj_trace_level(gobj);
-//     if((trace & TRACE_UV)) {
-//         trace_msg(">>> uv_write pty p=%p, send %d\n", (uv_stream_t *)&priv->uv_in, ln);
-//     }
-//     int ret = uv_write(
-//         &priv->uv_req_write,
-//         (uv_stream_t*)&priv->uv_in,
-//         b,
-//         1,
-//         on_write_cb
-//     );
-//     if(ret < 0) {
-//         log_error(0,
-//             "gobj",         "%s", gobj_full_name(gobj),
-//             "function",     "%s", __FUNCTION__,
-//             "msgset",       "%s", MSGSET_LIBUV_ERROR,
-//             "msg",          "%s", "uv_write FAILED",
-//             "uv_error",     "%s", uv_err_name(ret),
-//             "ln",           "%d", ln,
-//             NULL
-//         );
-//         if(gobj_is_running(gobj)) {
-//             gobj_stop(gobj); // auto-stop
-//         }
-//         return -1;
-//     }
-//     if((trace & TRACE_TRAFFIC)) {
-//         log_debug_dump(
-//             0,
-//             bf,
-//             ln,
-//             "WRITE to PTY %s",
-//             gobj_short_name(gobj)
-//         );
-//     }
-
-    return 0;
-}
 
 
 
@@ -401,60 +255,6 @@ PRIVATE int ac_paint(hgobj gobj, const char *event, json_t *kw, hgobj src)
         KW_DECREF(kw);
         return 0;
     }
-//     wclear(priv->wn);
-//
-//     int n_lines = dl_size(&priv->dl_lines);
-//     int n_win = priv->cy;
-//     if(n_lines <= n_win) {
-//         int y = n_win - n_lines;
-//         line_t *line = dl_first(&priv->dl_lines);
-//         for(int i=0; i < n_lines; i++) {
-//             int ll = strlen(line->text);
-//             if(ll > priv->cx) {
-//                 ll = priv->cx;
-//             }
-//             wmove(priv->wn, y+i, 0);
-//             setcolor(gobj, line);
-//             waddnstr(priv->wn, line->text, ll);
-//             line = dl_next(line);
-//         }
-//     } else {
-//         int y = 0;
-//         int b = n_lines - priv->base - n_win + 1;
-//         if(b < 1) {
-//             b = 1;
-//         }
-//         //log_debug_printf(0, "n_lines %d, n_win %d, b %d, base %d", n_lines, n_win, b, priv->base);
-//         line_t *line = dl_nfind(&priv->dl_lines, b);
-//         if(!line) {
-//             log_error(0,
-//                 "gobj",         "%s", gobj_full_name(gobj),
-//                 "function",     "%s", __FUNCTION__,
-//                 "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-//                 "msg",          "%s", "no line",
-//                 "line",         "%d", b,
-//                 NULL
-//             );
-//         } else {
-//             for(int i=0; i < n_win && line; i++) {
-//                 int ll = strlen(line->text);
-//                 if(ll > priv->cx) {
-//                     ll = priv->cx;
-//                 }
-//                 wmove(priv->wn, y+i, 0);
-//                 setcolor(gobj, line);
-//                 waddnstr(priv->wn, line->text, ll);
-//                 line = dl_next(line);
-//             }
-//         }
-//     }
-//
-//     if(priv->panel) {
-//         update_panels();
-//         doupdate();
-//     } else if(priv->wn) {
-//         wrefresh(priv->wn);
-//     }
 
     KW_DECREF(kw);
     return 0;
@@ -467,13 +267,43 @@ PRIVATE int ac_tty_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    const char *content64 = kw_get_str(kw, "content64", 0, 0);
-    GBUFFER *gbuf = gbuf_decodebase64string(content64);
-    write_data_to_pty(gobj, gbuf);
-    gbuf_decref(gbuf);
+    if(src == priv->gobj_console) {
+        KW_DECREF(kw);
+        return 0;
+    }
 
-    KW_DECREF(kw);
-    return 0;
+    if(priv->gobj_console) {
+        const char *content64 = kw_get_str(kw, "content64", 0, 0);
+        if(empty_string(content64)) {
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                "msg",          "%s", "content64 empty",
+                NULL
+            );
+        }
+
+        gobj_send_event(priv->gobj_console, "EV_WRITE_TTY", kw, gobj);
+    } else {
+
+        const char *content64 = kw_get_str(kw, "content64", 0, 0);
+        if(empty_string(content64)) {
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                "msg",          "%s", "content64 empty",
+                NULL
+            );
+            JSON_DECREF(kw);
+            return -1;
+        }
+
+        GBUFFER *gbuf = gbuf_decodebase64string(content64);
+        waddnstr(priv->wn, gbuf_cur_rd_pointer(gbuf), gbuf_leftbytes(gbuf));
+        gbuf_decref(gbuf);
+    }
 }
 
 /***************************************************************************
@@ -483,15 +313,6 @@ PRIVATE int ac_scroll_line_up(hgobj gobj, const char *event, json_t *kw, hgobj s
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    int n_lines = dl_size(&priv->dl_lines);
-    int n_win = priv->cy;
-
-    if(n_lines > n_win) {
-        if(priv->base < n_lines - n_win) {
-            priv->base++;
-            gobj_send_event(gobj, "EV_PAINT", 0, gobj);
-        }
-    }
 
     KW_DECREF(kw);
     return 0;
@@ -504,10 +325,6 @@ PRIVATE int ac_scroll_line_down(hgobj gobj, const char *event, json_t *kw, hgobj
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    if(priv->base > 0) {
-        priv->base--;
-        gobj_send_event(gobj, "EV_PAINT", 0, gobj);
-    }
 
     KW_DECREF(kw);
     return 0;
@@ -520,19 +337,6 @@ PRIVATE int ac_scroll_page_up(hgobj gobj, const char *event, json_t *kw, hgobj s
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    int n_lines = dl_size(&priv->dl_lines);
-    int n_win = priv->cy;
-
-    if(n_lines > n_win) {
-        if(priv->base < n_lines - n_win) {
-            priv->base += n_win;
-            if(priv->base >= n_lines - n_win) {
-                priv->base = n_lines - n_win;
-            }
-            gobj_send_event(gobj, "EV_PAINT", 0, gobj);
-        }
-    }
-
     KW_DECREF(kw);
     return 0;
 }
@@ -543,16 +347,6 @@ PRIVATE int ac_scroll_page_up(hgobj gobj, const char *event, json_t *kw, hgobj s
 PRIVATE int ac_scroll_page_down(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    int n_win = priv->cy;
-
-    if(priv->base > 0) {
-        priv->base -= n_win;
-        if(priv->base < 0) {
-            priv->base = 0;
-        }
-        gobj_send_event(gobj, "EV_PAINT", 0, gobj);
-    }
 
     KW_DECREF(kw);
     return 0;
@@ -565,13 +359,6 @@ PRIVATE int ac_scroll_top(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    int n_lines = dl_size(&priv->dl_lines);
-    int n_win = priv->cy;
-
-    priv->base = n_lines - n_win;
-
-    gobj_send_event(gobj, "EV_PAINT", 0, gobj);
-
     KW_DECREF(kw);
     return 0;
 }
@@ -583,10 +370,6 @@ PRIVATE int ac_scroll_bottom(hgobj gobj, const char *event, json_t *kw, hgobj sr
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    priv->base = 0;
-
-    gobj_send_event(gobj, "EV_PAINT", 0, gobj);
-
     KW_DECREF(kw);
     return 0;
 }
@@ -597,10 +380,6 @@ PRIVATE int ac_scroll_bottom(hgobj gobj, const char *event, json_t *kw, hgobj sr
 PRIVATE int ac_clrscr(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    clrscr(gobj);
-    priv->base = 0;
-    gobj_send_event(gobj, "EV_PAINT", 0, gobj);
 
     KW_DECREF(kw);
     return 0;
@@ -766,8 +545,8 @@ PRIVATE GCLASS _gclass = {
         mt_destroy,
         mt_start,
         mt_stop,
-        mt_play,
-        mt_pause,
+        0, //mt_play,
+        0, //mt_pause,
         mt_writing,
         0, //mt_reading,
         0, //mt_subscription_added,
