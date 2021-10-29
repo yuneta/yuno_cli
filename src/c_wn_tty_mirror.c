@@ -40,7 +40,7 @@ SDATA (ASN_INTEGER,     "h",                    0,  0, "logical height window si
 SDATA (ASN_INTEGER,     "x",                    0,  0, "x window coord"),
 SDATA (ASN_INTEGER,     "y",                    0,  0, "y window coord"),
 SDATA (ASN_INTEGER,     "cx",                   0,  80, "physical witdh window size"),
-SDATA (ASN_INTEGER,     "cy",                   0,  1, "physical height window size"),
+SDATA (ASN_INTEGER,     "cy",                   0,  24, "physical height window size"),
 SDATA (ASN_INTEGER,     "scroll_size",          0,  1000000, "scroll size. 0 is unlimited (until out of memory)"),
 SDATA (ASN_OCTET_STR,   "bg_color",             0,  "blue", "Background color"),
 SDATA (ASN_OCTET_STR,   "fg_color",             0,  "white", "Foreground color"),
@@ -299,7 +299,7 @@ PRIVATE int ac_write_tty(hgobj gobj, const char *event, json_t *kw, hgobj src)
 
     GBUFFER *gbuf = gbuf_decodebase64string(content64);
 
-    if(1) { // TODO TEST
+    if(0) { // TODO TEST
         waddnstr(priv->wn, gbuf_cur_rd_pointer(gbuf), gbuf_leftbytes(gbuf));
 
         if(0) { // TODO priv->panel) {
@@ -309,7 +309,7 @@ PRIVATE int ac_write_tty(hgobj gobj, const char *event, json_t *kw, hgobj src)
             wrefresh(priv->wn);
         }
 
-    }
+    } else
 
     if(priv->gobj_tty) {
         GBUF_INCREF(gbuf);
