@@ -284,37 +284,45 @@ PRIVATE int ac_write_tty(hgobj gobj, const char *event, json_t *kw, hgobj src)
         return 0;
     }
 
-    if(priv->gobj_tty) {
-        const char *content64 = kw_get_str(kw, "content64", 0, 0);
-        if(empty_string(content64)) {
-            log_error(0,
-                "gobj",         "%s", gobj_full_name(gobj),
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-                "msg",          "%s", "content64 empty",
-                NULL
-            );
-        }
-        gobj_send_event(priv->gobj_tty, "EV_WRITE_TTY", kw, gobj);
-
-    } else {
-        const char *content64 = kw_get_str(kw, "content64", 0, 0);
-        if(empty_string(content64)) {
-            log_error(0,
-                "gobj",         "%s", gobj_full_name(gobj),
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-                "msg",          "%s", "content64 empty",
-                NULL
-            );
-            JSON_DECREF(kw);
-            return -1;
-        }
-
-        GBUFFER *gbuf = gbuf_decodebase64string(content64);
-        waddnstr(priv->wn, gbuf_cur_rd_pointer(gbuf), gbuf_leftbytes(gbuf));
-        gbuf_decref(gbuf);
+    const char *content64 = kw_get_str(kw, "content64", 0, 0);
+    if(empty_string(content64)) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "content64 empty",
+            NULL
+        );
+        JSON_DECREF(kw);
+        return -1;
     }
+
+    GBUFFER *gbuf = gbuf_decodebase64string(content64);
+
+    if(1) { // TODO TEST
+        waddnstr(priv->wn, gbuf_cur_rd_pointer(gbuf), gbuf_leftbytes(gbuf));
+
+        if(0) { // TODO priv->panel) {
+            update_panels();
+            doupdate();
+        } else if(priv->wn) {
+            wrefresh(priv->wn);
+        }
+
+    }
+
+    if(priv->gobj_tty) {
+        GBUF_INCREF(gbuf);
+        json_t *kw_tty = json_pack("{s:I}",
+            "gbuffer", (json_int_t)(size_t)gbuf
+        );
+        gobj_send_event(priv->gobj_tty, "EV_WRITE_TTY", kw_tty, gobj);
+    }
+
+    GBUF_DECREF(gbuf);
+
+    KW_DECREF(kw);
+    return 0;
 }
 
 /***************************************************************************
