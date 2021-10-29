@@ -72,7 +72,7 @@ typedef struct _PRIVATE_DATA {
     int32_t scroll_size;
     WINDOW *wn;     // ncurses window handler
     PANEL *panel;   // panel handler
-    hgobj gobj_console;
+    hgobj gobj_tty;
 
     int32_t cx;
     int32_t cy;
@@ -172,15 +172,15 @@ PRIVATE int mt_start(hgobj gobj)
      *  Create pseudoterminal
      */
     json_t *kw_pty = json_pack("{s:s}",
-        "process", "bash"
+        "process", ""
         // TODO get and pass rows,cols
     );
-    priv->gobj_console = gobj_create(gobj_name(gobj), GCLASS_PTY, kw_pty, gobj);
-    if(priv->gobj_console) {
-        gobj_set_volatil(priv->gobj_console, TRUE);
+    priv->gobj_tty = gobj_create(gobj_name(gobj), GCLASS_PTY, kw_pty, gobj);
+    if(priv->gobj_tty) {
+        gobj_set_volatil(priv->gobj_tty, TRUE);
     }
 
-    gobj_start_childs(gobj);
+    gobj_start(priv->gobj_tty);
     return 0;
 }
 
@@ -189,7 +189,10 @@ PRIVATE int mt_start(hgobj gobj)
  ***************************************************************************/
 PRIVATE int mt_stop(hgobj gobj)
 {
-    gobj_stop_childs(gobj);
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    gobj_stop(priv->gobj_tty);
+
     return 0;
 }
 
@@ -263,16 +266,23 @@ PRIVATE int ac_paint(hgobj gobj, const char *event, json_t *kw, hgobj src)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int ac_tty_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
+PRIVATE int ac_write_tty(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    if(src == priv->gobj_console) {
+    if(src == priv->gobj_tty) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "What fck?",
+            NULL
+        );
         KW_DECREF(kw);
         return 0;
     }
 
-    if(priv->gobj_console) {
+    if(priv->gobj_tty) {
         const char *content64 = kw_get_str(kw, "content64", 0, 0);
         if(empty_string(content64)) {
             log_error(0,
@@ -283,10 +293,9 @@ PRIVATE int ac_tty_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
                 NULL
             );
         }
+        gobj_send_event(priv->gobj_tty, "EV_WRITE_TTY", kw, gobj);
 
-        gobj_send_event(priv->gobj_console, "EV_WRITE_TTY", kw, gobj);
     } else {
-
         const char *content64 = kw_get_str(kw, "content64", 0, 0);
         if(empty_string(content64)) {
             log_error(0,
@@ -462,7 +471,7 @@ PRIVATE int ac_top(hgobj gobj, const char *event, json_t *kw, hgobj src)
  *                          FSM
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = {
-    {"EV_TTY_DATA",          0,  0,  0},
+    {"EV_WRITE_TTY",        0,  0,  0},
     {"EV_PAINT",            0,  0,  0},
     {"EV_MOVE",             0,  0,  0},
     {"EV_SIZE",             0,  0,  0},
@@ -474,8 +483,6 @@ PRIVATE const EVENT input_events[] = {
     {"EV_SCROLL_TOP",       0,  0,  0},
     {"EV_SCROLL_BOTTOM",    0,  0,  0},
     {"EV_CLRSCR",           0,  0,  0},
-    {"EV_ON_OPEN",          0,  0,  0},
-    {"EV_ON_CLOSE",         0,  0,  0},
     {NULL, 0, 0, 0}
 };
 PRIVATE const EVENT output_events[] = {
@@ -488,7 +495,7 @@ PRIVATE const char *state_names[] = {
 };
 
 PRIVATE EV_ACTION ST_IDLE[] = {
-    {"EV_TTY_DATA",         ac_tty_data,            0},
+    {"EV_WRITE_TTY",        ac_write_tty,           0},
     {"EV_MOVE",             ac_move,                0},
     {"EV_SIZE",             ac_size,                0},
     {"EV_PAINT",            ac_paint,               0},
@@ -500,8 +507,6 @@ PRIVATE EV_ACTION ST_IDLE[] = {
     {"EV_SCROLL_TOP",       ac_scroll_top,          0},
     {"EV_SCROLL_BOTTOM",    ac_scroll_bottom,       0},
     {"EV_CLRSCR",           ac_clrscr,              0},
-    {"EV_ON_OPEN",          0,                      0},
-    {"EV_ON_CLOSE",         0,                      0},
     {0,0,0}
 };
 

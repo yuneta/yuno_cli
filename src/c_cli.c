@@ -1482,7 +1482,7 @@ PRIVATE int destroy_tty_mirror_window(hgobj gobj, const char *name)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    gobj_destroy_named_childs(
+    gobj_destroy_named_tree(
         priv->gobj_workareabox,
         name
     );
@@ -2516,7 +2516,7 @@ PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
         const char *window_tty_mirror_name; json_t *jn_;
         json_object_foreach(consoles, window_tty_mirror_name, jn_) {
             destroy_static(gobj, window_tty_mirror_name);
-            destroy_display_window(gobj, window_tty_mirror_name);
+            destroy_tty_mirror_window(gobj, window_tty_mirror_name);
         }
         json_decref(consoles);
     }
@@ -3063,7 +3063,7 @@ PRIVATE int ac_tty_mirror_data(hgobj gobj, const char *event, json_t *kw, hgobj 
 
         hgobj wn_tty_mirror_disp = get_tty_mirror_window(gobj, window_tty_mirror_name);
         if(wn_tty_mirror_disp) {
-            gobj_send_event(wn_tty_mirror_disp, event, jn_data, src);
+            gobj_send_event(wn_tty_mirror_disp, "EV_WRITE_TTY", jn_data, src);
         } else {
             json_decref(jn_data);
         }
