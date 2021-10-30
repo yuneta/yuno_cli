@@ -1905,30 +1905,38 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
         );
     }
 
-    hgobj gobj_focus = GetFocus();
-    if(gobj_typeof_gclass(gobj_focus, "GCLASS_WN_TTY_NAME")) {
-        GBUFFER *gbuf = gbuf_create(nread, nread, 0, 0);
-        gbuf_append(gbuf, buf->base, nread);
-        json_t *kw_tty = json_pack("{s:I}",
-            "gbuffer", (json_int_t)(size_t)gbuf
-        );
-        gobj_send_event(gobj_focus, "EV_WRITE_TTY", kw_tty, gobj);
-
+    if(buf->base[0] == 3) {
+        gobj_shutdown();
         return;
     }
 
     if((buf->base[0] <= 0x1B && nread <= 8) || buf->base[0] == 0x7F) {
-        if(buf->base[0] == 3) {
-            gobj_shutdown();
-            return;
-        }
-
         uint8_t b[8];
         memset(b, 0, sizeof(b));
         memmove(b, buf->base, nread);
         struct keytable_s *kt = event_by_key(b);
-        if(!kt) {
-            return;
+        if(!kt || strcmp(kt->dst_gobj, "cli")!=0) {
+            hgobj wn_display = get_top_display_window(gobj);
+            if(gobj_typeof_gclass(wn_display, GCLASS_WN_TTY_MIRROR_NAME)) {
+                GBUFFER *gbuf = gbuf_string2base64(buf->base, nread);
+                if(!gbuf) {
+                    log_error(LOG_OPT_TRACE_STACK,
+                        "gobj",         "%s", gobj_full_name(gobj),
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_MEMORY_ERROR,
+                        "msg",          "%s", "gbuf_string2base64() FAILED",
+                        NULL
+                    );
+                    return;
+                }
+
+                json_t *kw_tty = json_pack("{s:s}",
+                    "content64", gbuf_cur_rd_pointer(gbuf)
+                );
+                gobj_send_event(wn_display, "EV_KEYBOARD", kw_tty, gobj);
+                gbuf_decref(gbuf);
+                return;
+            }
         }
 
         const char *dst = kt->dst_gobj;
@@ -1966,6 +1974,30 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
         }
 
     } else {
+
+        hgobj wn_display = get_top_display_window(gobj);
+        if(gobj_typeof_gclass(wn_display, GCLASS_WN_TTY_MIRROR_NAME)) {
+            GBUFFER *gbuf = gbuf_string2base64(buf->base, nread);
+            if(!gbuf) {
+                log_error(LOG_OPT_TRACE_STACK,
+                    "gobj",         "%s", gobj_full_name(gobj),
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_MEMORY_ERROR,
+                    "msg",          "%s", "gbuf_string2base64() FAILED",
+                    NULL
+                );
+                return;
+            }
+
+            json_t *kw_tty = json_pack("{s:s}",
+                "content64", gbuf_cur_rd_pointer(gbuf)
+            );
+            gobj_send_event(wn_display, "EV_KEYBOARD", kw_tty, gobj);
+            gbuf_decref(gbuf);
+            return;
+        }
+
+
         for(int i=0; i<nread; i++) {
             process_key(gobj, buf->base[i]);
         }
@@ -2980,14 +3012,17 @@ PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
 PRIVATE int ac_tty_mirror_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     const char *agent_name = gobj_name(gobj_read_pointer_attr(src, "user_data"));
-    const char *tty_name = kw_get_str(kw, "data`name", 0, 0);
+
+    json_t *jn_data = kw_get_dict(kw, "data", 0, KW_EXTRACT|KW_REQUIRED);
+    const char *tty_name = kw_get_str(jn_data, "name", "", KW_REQUIRED);
+
     char window_tty_mirror_name[NAME_MAX];
     snprintf(window_tty_mirror_name, sizeof(window_tty_mirror_name), "%s(%s)", agent_name, tty_name);
 
     /*
      *  Create display window of external agent
      */
-    hgobj wn_tty_mirror_disp = create_tty_mirror_window(gobj, window_tty_mirror_name, 0);
+    hgobj wn_tty_mirror_disp = create_tty_mirror_window(gobj, window_tty_mirror_name, jn_data);
     if(wn_tty_mirror_disp) {
         char name_[NAME_MAX+20];
         snprintf(name_, sizeof(name_), "consoles`%s", window_tty_mirror_name);
@@ -2997,6 +3032,7 @@ PRIVATE int ac_tty_mirror_open(hgobj gobj, const char *event, json_t *kw, hgobj 
             json_true(), // owned
             KW_CREATE
         );
+            gobj_write_pointer_attr(wn_tty_mirror_disp, "user_data", src);
 
         /*
          *  Create button window of console (right now implemented as static window)

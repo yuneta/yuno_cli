@@ -4,10 +4,14 @@
  *
  *          Tty (console)
  *
+ *          https://stackoverflow.com/questions/65282503/ncurses-newterm-following-openpty
+ *
  *          Copyright (c) 2021 Niyamaka.
  *          All Rights Reserved.
 ***********************************************************************/
 #include <string.h>
+#include <pty.h>
+#include <unistd.h>
 #include <ncurses/ncurses.h>
 #include <ncurses/panel.h>
 #include "c_wn_tty_mirror.h"
@@ -23,6 +27,7 @@
 /***************************************************************************
  *              Prototypes
  ***************************************************************************/
+PRIVATE FILE *open_tty(char *path);
 PRIVATE int clrscr(hgobj gobj);
 
 
@@ -34,19 +39,22 @@ PRIVATE int clrscr(hgobj gobj);
  *      Attributes - order affect to oid's
  *---------------------------------------------*/
 PRIVATE sdata_desc_t tattr_desc[] = {
-SDATA (ASN_OCTET_STR,   "layout_type",          0,  0, "Layout inherit from parent"),
-SDATA (ASN_INTEGER,     "w",                    0,  0, "logical witdh window size"),
-SDATA (ASN_INTEGER,     "h",                    0,  0, "logical height window size"),
-SDATA (ASN_INTEGER,     "x",                    0,  0, "x window coord"),
-SDATA (ASN_INTEGER,     "y",                    0,  0, "y window coord"),
-SDATA (ASN_INTEGER,     "cx",                   0,  80, "physical witdh window size"),
-SDATA (ASN_INTEGER,     "cy",                   0,  24, "physical height window size"),
-SDATA (ASN_INTEGER,     "scroll_size",          0,  1000000, "scroll size. 0 is unlimited (until out of memory)"),
-SDATA (ASN_OCTET_STR,   "bg_color",             0,  "blue", "Background color"),
-SDATA (ASN_OCTET_STR,   "fg_color",             0,  "white", "Foreground color"),
-SDATA (ASN_POINTER,     "user_data",            0,  0, "user data"),
-SDATA (ASN_POINTER,     "user_data2",           0,  0, "more user data"),
-SDATA (ASN_POINTER,     "subscriber",           0,  0, "subscriber of output-events. If it's null then subscriber is the parent."),
+/*-ATTR-type------------name----------------flag--------default-----description---------- */
+SDATA (ASN_OCTET_STR,   "name",             0,          "",     "color"),
+
+SDATA (ASN_OCTET_STR,   "layout_type",      0,          0,      "Layout inherit from parent"),
+SDATA (ASN_INTEGER,     "w",                0,          0,      "logical witdh window size"),
+SDATA (ASN_INTEGER,     "h",                0,          0,      "logical height window size"),
+SDATA (ASN_INTEGER,     "x",                0,          0,      "x window coord"),
+SDATA (ASN_INTEGER,     "y",                0,          0,      "y window coord"),
+SDATA (ASN_INTEGER,     "cx",               0,          80,     "physical witdh window size"),
+SDATA (ASN_INTEGER,     "cy",               0,          24,     "physical height window size"),
+SDATA (ASN_INTEGER,     "scroll_size",      0,          1000000,"scroll size. 0 is unlimited (until out of memory)"),
+SDATA (ASN_OCTET_STR,   "bg_color",         0,          "blue", "Background color"),
+SDATA (ASN_OCTET_STR,   "fg_color",         0,          "white","Foreground color"),
+SDATA (ASN_POINTER,     "user_data",        0,          0,      "user data"),
+SDATA (ASN_POINTER,     "user_data2",       0,          0,      "more user data"),
+SDATA (ASN_POINTER,     "subscriber",       0,          0,      "subscriber of output-events. If it's null then subscriber is the parent."),
 SDATA_END()
 };
 
@@ -54,10 +62,10 @@ SDATA_END()
  *      GClass trace levels
  *---------------------------------------------*/
 enum {
-    TRACE_USER = 0x0001,
+    TRACE_MESSAGES = 0x0001,
 };
 PRIVATE const trace_level_t s_user_trace_level[16] = {
-{"trace_user",        "Trace user description"},
+{"messages",        "Trace messages"},
 {0, 0},
 };
 
@@ -70,8 +78,14 @@ typedef struct _PRIVATE_DATA {
     const char *fg_color;
     const char *bg_color;
     int32_t scroll_size;
+
+    SCREEN *screen;     /* this screen - curses internal data */
+    FILE *input;
+    FILE *output;
+
     WINDOW *wn;     // ncurses window handler
     PANEL *panel;   // panel handler
+
     hgobj gobj_tty;
 
     int32_t cx;
@@ -120,27 +134,19 @@ PRIVATE void mt_create(hgobj gobj)
     int cx = gobj_read_int32_attr(gobj, "cx");
     int cy = gobj_read_int32_attr(gobj, "cy");
 
-    priv->wn = newwin(cy, cx, y, x);
-    if(!priv->wn) {
-        log_error(0,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-            "msg",          "%s", "newwin() FAILED",
-            NULL
-        );
+    if(1) {
+        priv->wn = newwin(cy, cx, y, x);
+        if(!priv->wn) {
+            log_error(0,
+                "gobj",         "%s", gobj_full_name(gobj),
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+                "msg",          "%s", "newwin() FAILED",
+                NULL
+            );
+        }
+        scrollok(priv->wn, true);
     }
-    priv->panel = new_panel(priv->wn);
-    if(!priv->panel) {
-        log_error(0,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-            "msg",          "%s", "new_panel() FAILED",
-            NULL
-        );
-    }
-    //scrollok(priv->wn, true);
 }
 
 /***************************************************************************
@@ -171,16 +177,36 @@ PRIVATE int mt_start(hgobj gobj)
     /*
      *  Create pseudoterminal
      */
-    json_t *kw_pty = json_pack("{s:s}",
-        "process", ""
-        // TODO get and pass rows,cols
-    );
-    priv->gobj_tty = gobj_create(gobj_name(gobj), GCLASS_PTY, kw_pty, gobj);
-    if(priv->gobj_tty) {
-        gobj_set_volatil(priv->gobj_tty, TRUE);
+    if(0) {
+        json_t *kw_pty = json_pack("{s:s, s:b}",
+            "process", "screen",
+            "no_output", 0
+            // TODO get and pass rows,cols
+        );
+        priv->gobj_tty = gobj_create(gobj_name(gobj), GCLASS_PTY, kw_pty, gobj);
+        if(priv->gobj_tty) {
+            gobj_set_volatil(priv->gobj_tty, TRUE);
+        }
+        gobj_start(priv->gobj_tty);
+
     }
 
-    gobj_start(priv->gobj_tty);
+    if(0) {
+        priv->input = priv->output = open_tty("/");
+
+        cbreak();
+        noecho();
+        scrollok(stdscr, TRUE);
+        box(stdscr, 0, 0);
+
+        int x = gobj_read_int32_attr(gobj, "x");
+        int y = gobj_read_int32_attr(gobj, "y");
+        int cx = gobj_read_int32_attr(gobj, "cx");
+        int cy = gobj_read_int32_attr(gobj, "cy");
+        priv->wn = newwin(cy, cx, y, x);
+    }
+
+
     return 0;
 }
 
@@ -191,8 +217,19 @@ PRIVATE int mt_stop(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    if(!gobj_is_destroying(priv->gobj_tty)) {
-        gobj_stop(priv->gobj_tty);
+    if(priv->gobj_tty) {
+        if(!gobj_is_destroying(priv->gobj_tty)) {
+            gobj_stop(priv->gobj_tty);
+        }
+    }
+
+    if(priv->wn) {
+        delwin(priv->wn);
+        priv->wn = 0;
+    }
+    if(priv->screen) {
+        endwin();
+        priv->screen = 0;
     }
 
     return 0;
@@ -231,9 +268,64 @@ PRIVATE void mt_destroy(hgobj gobj)
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE FILE *open_tty(char *path)
+{
+    FILE *fp;
+    int amaster;
+    int aslave;
+    char slave_name[1024];
+    char s_option[sizeof(slave_name) + 80];
+    const char *xterm_prog = 0;
+
+    if ((xterm_prog = getenv("XTERM_PROG")) == 0)
+        xterm_prog = "xterm";
+
+    if (openpty(&amaster, &aslave, slave_name, 0, 0) != 0
+        || strlen(slave_name) > sizeof(slave_name) - 1) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "openpty() FAILED",
+            NULL
+        );
+    }
+    if (strrchr(slave_name, '/') == 0) {
+        errno = EISDIR;
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "slave_name FAILED",
+            NULL
+        );
+    }
+    snprintf(s_option, sizeof(s_option),
+                "-S%s/%d", slave_name, aslave);
+    if (fork()) {
+        execlp(xterm_prog, xterm_prog, s_option, "-title", path, (char *) 0);
+        _exit(0);
+    }
+    fp = fdopen(amaster, "r+");
+    if (fp == 0) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "fdopen() FAILED",
+            NULL
+        );
+    }
+    //assert(fp != 0);
+    return fp;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PRIVATE int clrscr(hgobj gobj)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     return 0;
 }
@@ -260,6 +352,27 @@ PRIVATE int ac_paint(hgobj gobj, const char *event, json_t *kw, hgobj src)
         KW_DECREF(kw);
         return 0;
     }
+
+    KW_DECREF(kw);
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int ac_keyboard(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    const char *name = gobj_read_str_attr(gobj, "name");
+    const char *content64 = kw_get_str(kw, "content64", 0, 0);
+    hgobj gobj_cmd = gobj_read_pointer_attr(gobj, "user_data");
+
+    json_t *kw_command = json_pack("{s:s, s:s}",
+        "name", name,
+        "content64", content64
+    );
+
+    json_t *webix = gobj_command(gobj_cmd, "write-tty", kw_command, gobj);
+    json_decref(webix);
 
     KW_DECREF(kw);
     return 0;
@@ -298,18 +411,24 @@ PRIVATE int ac_write_tty(hgobj gobj, const char *event, json_t *kw, hgobj src)
     }
 
     GBUFFER *gbuf = gbuf_decodebase64string(content64);
+    char *p = gbuf_cur_rd_pointer(gbuf);
+    int len = gbuf_leftbytes(gbuf);
 
-    if(0) { // TODO TEST
-        waddnstr(priv->wn, gbuf_cur_rd_pointer(gbuf), gbuf_leftbytes(gbuf));
+    if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
+        log_debug_dump(0, p, len,  "write_tty");
+    }
 
-        if(0) { // TODO priv->panel) {
-            update_panels();
-            doupdate();
-        } else if(priv->wn) {
-            wrefresh(priv->wn);
-        }
-
+    if(priv->output) {
+        fwrite(p, len, 1, priv->output);
     } else
+
+    if(priv->wn) {
+        while(len-- > 0) {
+            waddch(priv->wn, *p);
+            wnoutrefresh(priv->wn);
+        }
+        doupdate();
+    }
 
     if(priv->gobj_tty) {
         GBUF_INCREF(gbuf);
@@ -330,7 +449,7 @@ PRIVATE int ac_write_tty(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE int ac_scroll_line_up(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
 
     KW_DECREF(kw);
@@ -342,7 +461,7 @@ PRIVATE int ac_scroll_line_up(hgobj gobj, const char *event, json_t *kw, hgobj s
  ***************************************************************************/
 PRIVATE int ac_scroll_line_down(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
 
     KW_DECREF(kw);
@@ -354,7 +473,7 @@ PRIVATE int ac_scroll_line_down(hgobj gobj, const char *event, json_t *kw, hgobj
  ***************************************************************************/
 PRIVATE int ac_scroll_page_up(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     KW_DECREF(kw);
     return 0;
@@ -365,7 +484,7 @@ PRIVATE int ac_scroll_page_up(hgobj gobj, const char *event, json_t *kw, hgobj s
  ***************************************************************************/
 PRIVATE int ac_scroll_page_down(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     KW_DECREF(kw);
     return 0;
@@ -376,7 +495,7 @@ PRIVATE int ac_scroll_page_down(hgobj gobj, const char *event, json_t *kw, hgobj
  ***************************************************************************/
 PRIVATE int ac_scroll_top(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     KW_DECREF(kw);
     return 0;
@@ -387,7 +506,7 @@ PRIVATE int ac_scroll_top(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE int ac_scroll_bottom(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     KW_DECREF(kw);
     return 0;
@@ -398,7 +517,7 @@ PRIVATE int ac_scroll_bottom(hgobj gobj, const char *event, json_t *kw, hgobj sr
  ***************************************************************************/
 PRIVATE int ac_clrscr(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+//     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     KW_DECREF(kw);
     return 0;
@@ -481,6 +600,7 @@ PRIVATE int ac_top(hgobj gobj, const char *event, json_t *kw, hgobj src)
  *                          FSM
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = {
+    {"EV_KEYBOARD",         0,  0,  0},
     {"EV_WRITE_TTY",        0,  0,  0},
     {"EV_PAINT",            0,  0,  0},
     {"EV_MOVE",             0,  0,  0},
@@ -505,6 +625,7 @@ PRIVATE const char *state_names[] = {
 };
 
 PRIVATE EV_ACTION ST_IDLE[] = {
+    {"EV_KEYBOARD",         ac_keyboard,            0},
     {"EV_WRITE_TTY",        ac_write_tty,           0},
     {"EV_MOVE",             ac_move,                0},
     {"EV_SIZE",             ac_size,                0},
