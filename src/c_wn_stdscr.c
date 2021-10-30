@@ -504,16 +504,19 @@ PUBLIC int _get_curses_color(const char *fg_color, const char *bg_color)
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int SetFocus(hgobj gobj)
+PUBLIC int SetFocus(hgobj gobj, hgobj *prev_focus_gobj)
 {
     if(gobj != __gobj_with_focus__) {
         if(__gobj_with_focus__) {
             gobj_send_event(__gobj_with_focus__, "EV_KILLFOCUS", 0, 0);
         }
     }
+    if(prev_focus_gobj) {
+        *prev_focus_gobj = __gobj_with_focus__;
+    }
     __gobj_with_focus__ = gobj;
-    gobj_send_event(__gobj_with_focus__, "EV_SETFOCUS", 0, 0);
-    return 0;
+
+    return gobj_send_event(__gobj_with_focus__, "EV_SETFOCUS", 0, 0);
 }
 
 /***************************************************************************

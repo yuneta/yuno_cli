@@ -426,7 +426,7 @@ PRIVATE int mt_start(hgobj gobj)
     priv->uv_read_active = 1;
     uv_read_start((uv_stream_t*)&priv->uv_tty, on_alloc_cb, on_read_cb);
 
-    SetFocus(priv->gobj_editline);
+    SetFocus(priv->gobj_editline, 0);
     msg2statusline(gobj, 0, "Wellcome to Yuneta. Type help for assistance.");
 
     /*
@@ -1559,6 +1559,13 @@ PRIVATE int set_top_window(hgobj gobj, const char *name)
         char prompt[32];
         snprintf(prompt, sizeof(prompt), "%s> ", name);
         gobj_write_str_attr(priv->gobj_editline, "prompt", prompt);
+
+        hgobj gobj_prev;
+
+        if(SetFocus(gobj_display, &gobj_prev)<0) {
+            SetFocus(gobj_prev, 0);
+        }
+
     } else {
         log_error(0,
             "gobj",         "%s", gobj_full_name(gobj),
@@ -1779,7 +1786,7 @@ PRIVATE int display_webix_result(
         fflush(priv->file_saving_output);
     }
 
-    SetFocus(priv->gobj_editline);
+    SetFocus(priv->gobj_editline, 0);
 
     JSON_DECREF(webix);
     return 0;
@@ -1932,7 +1939,7 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
                 );
             } else {
                 gobj_send_event(dst_gobj, event, 0, gobj);
-                SetFocus(priv->gobj_editline);
+                SetFocus(priv->gobj_editline, 0);
             }
             return;
         }
@@ -1966,7 +1973,7 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
                     if(strcmp(event, "EV_EDITLINE_DEL_LINE")==0) {
                         msg2statusline(gobj, 0, "");
                     }
-                    SetFocus(priv->gobj_editline);
+                    SetFocus(priv->gobj_editline, 0);
                     return;
                 }
             }
@@ -2040,7 +2047,7 @@ PRIVATE void new_line(hgobj gobj, hgobj wn_display)
         "text", ""
     );
     gobj_send_event(wn_display, "EV_SETTEXT", jn_text, gobj);
-    SetFocus(priv->gobj_editline);
+    SetFocus(priv->gobj_editline, 0);
 }
 
 /***************************************************************************
@@ -2553,7 +2560,7 @@ PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
     );
 
     set_top_window(gobj, "console");
-    SetFocus(priv->gobj_editline);
+    SetFocus(priv->gobj_editline, 0);
 
     // No puedo parar y destruir con libuv.
     // De momento conexiones indestructibles, destruibles solo con la salida del yuno.
@@ -2689,7 +2696,7 @@ PRIVATE int ac_edit_config(hgobj gobj, const char *event, json_t *kw, hgobj src)
         "text", upgrade_command
     );
     gobj_send_event(priv->gobj_editline, "EV_SETTEXT", jn_text, gobj);
-    SetFocus(priv->gobj_editline);
+    SetFocus(priv->gobj_editline, 0);
 
     KW_DECREF(kw);
     return 0;
@@ -3060,7 +3067,7 @@ PRIVATE int ac_tty_mirror_close(hgobj gobj, const char *event, json_t *kw, hgobj
     }
 
     set_top_window(gobj, agent_name);
-    SetFocus(priv->gobj_editline);
+    SetFocus(priv->gobj_editline, 0);
 
     KW_DECREF(kw);
     return 0;
