@@ -102,11 +102,23 @@ PRIVATE char *get_history_file(char *bf, int bfsize);
  ***************************************************************************/
 hgobj __top_display_window__ = 0;
 
-struct keytable_s {
+typedef struct keytable_s {
     const char *dst_gobj;
     const char *event;
     uint8_t keycode[8+1];
-} keytable[] = {
+} keytable_t;
+
+keytable_t keytable1[] = {
+{"cli",             "EV_PREVIOUS_WINDOW",           MKEY_ALT_LEFT},
+{"cli",             "EV_PREVIOUS_WINDOW",           MKEY_CTRL_LEFT},
+{"cli",             "EV_PREVIOUS_WINDOW",           CTRL_P},
+{"cli",             "EV_NEXT_WINDOW",               MKEY_ALT_RIGHT},
+{"cli",             "EV_NEXT_WINDOW",               MKEY_CTRL_RIGHT},
+{"cli",             "EV_NEXT_WINDOW",               CTRL_N},
+{0}
+};
+
+keytable_t keytable2[] = {
 {"editline",    "EV_EDITLINE_MOVE_START",       CTRL_A},
 {"editline",    "EV_EDITLINE_MOVE_START",       MKEY_START},
 {"editline",    "EV_EDITLINE_MOVE_START",       MKEY_START2},
@@ -135,21 +147,12 @@ struct keytable_s {
 {"editline",    "EV_EDITLINE_DEL_PREV_WORD",    CTRL_W},
 
 {"__top_display_window__",  "EV_CLRSCR",                    CTRL_K},
-
 {"__top_display_window__",  "EV_SCROLL_PAGE_UP",            MKEY_PREV_PAGE},
 {"__top_display_window__",  "EV_SCROLL_PAGE_DOWN",          MKEY_NEXT_PAGE},
-
 {"__top_display_window__",  "EV_SCROLL_LINE_UP",            MKEY_ALT_PREV_PAGE},
 {"__top_display_window__",  "EV_SCROLL_LINE_DOWN",          MKEY_ALT_NEXT_PAGE},
 {"__top_display_window__",  "EV_SCROLL_TOP",                MKEY_CTRL_START},
 {"__top_display_window__",  "EV_SCROLL_BOTTOM",             MKEY_CTRL_END},
-
-{"cli",             "EV_PREVIOUS_WINDOW",           MKEY_ALT_LEFT},
-{"cli",             "EV_PREVIOUS_WINDOW",           MKEY_CTRL_LEFT},
-{"cli",             "EV_PREVIOUS_WINDOW",           CTRL_P},
-{"cli",             "EV_NEXT_WINDOW",               MKEY_ALT_RIGHT},
-{"cli",             "EV_NEXT_WINDOW",               MKEY_CTRL_RIGHT},
-{"cli",             "EV_NEXT_WINDOW",               CTRL_N},
 
 {0}
 };
@@ -1807,28 +1810,13 @@ PRIVATE int msg2statusline(hgobj gobj, BOOL error, const char *fmt, ...)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE struct keytable_s *event_by_key(uint8_t kb[8])
+PRIVATE keytable_t *event_by_key(keytable_t *keytable, uint8_t kb[8])
 {
     for(int i=0; keytable[i].event!=0; i++) {
         if(memcmp(kb, keytable[i].keycode, strlen((const char *)keytable[i].keycode))==0) {
             return &keytable[i];
         }
     }
-    return 0;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE int process_key(hgobj gobj, int kb)
-{
-    if(kb >= 0x20 && kb <= 0x7f) {
-        json_t *kw_char = json_pack("{s:i}",
-            "char", kb
-        );
-        gobj_send_event(GetFocus(), "EV_KEYCHAR", kw_char, gobj);
-    }
-
     return 0;
 }
 
@@ -1909,99 +1897,93 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
         gobj_shutdown();
         return;
     }
+    if(nread > 8) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "nread TOO LONG",
+            "nread",        "%d", nread,
+            NULL
+        );
+    }
+    uint8_t b[8];
+    memset(b, 0, sizeof(b));
+    memmove(b, buf->base, MAX(8, nread));
 
-    if((buf->base[0] <= 0x1B && nread <= 8) || buf->base[0] == 0x7F) {
-        uint8_t b[8];
-        memset(b, 0, sizeof(b));
-        memmove(b, buf->base, nread);
-        struct keytable_s *kt = event_by_key(b);
-        if(!kt || strcmp(kt->dst_gobj, "cli")!=0) {
-            hgobj wn_display = get_top_display_window(gobj);
-            if(gobj_typeof_gclass(wn_display, GCLASS_WN_TTY_MIRROR_NAME)) {
-                GBUFFER *gbuf = gbuf_string2base64(buf->base, nread);
-                if(!gbuf) {
-                    log_error(LOG_OPT_TRACE_STACK,
-                        "gobj",         "%s", gobj_full_name(gobj),
-                        "function",     "%s", __FUNCTION__,
-                        "msgset",       "%s", MSGSET_MEMORY_ERROR,
-                        "msg",          "%s", "gbuf_string2base64() FAILED",
-                        NULL
-                    );
-                    return;
-                }
+    do {
+        /*
+         *  Level 1, window management functions
+         */
+        keytable_t *kt = event_by_key(keytable1, b);
+        if(kt) {
+            const char *dst = kt->dst_gobj;
+            const char *event = kt->event;
 
-                json_t *kw_tty = json_pack("{s:s}",
-                    "content64", gbuf_cur_rd_pointer(gbuf)
-                );
-                gobj_send_event(wn_display, "EV_KEYBOARD", kw_tty, gobj);
-                gbuf_decref(gbuf);
-                return;
-            }
-        }
-
-        const char *dst = kt->dst_gobj;
-        const char *event = kt->event;
-
-        if(!empty_string(event)) {
-            if(strcmp(event, "EV_EDITLINE_DEL_LINE")==0) {
-                msg2statusline(gobj, 0, "");
-            }
-
-            if(!empty_string(dst)) {
-                hgobj dst_gobj;
-                if(strcmp(dst, "__top_display_window__")==0) {
-                    dst_gobj = __top_display_window__;
-                } else {
-                    dst_gobj = gobj_find_unique_gobj(dst, FALSE);
-                }
-                if(!dst_gobj) {
-                    log_error(0,
-                        "gobj",         "%s", gobj_full_name(gobj),
-                        "function",     "%s", __FUNCTION__,
-                        "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-                        "msg",          "%s", "unique gobj NOT FOUND",
-                        "unique",       "%s", dst,
-                        NULL
-                    );
-                } else {
-                    gobj_send_event(dst_gobj, event, 0, gobj);
-                    SetFocus(priv->gobj_editline);
-                }
-            } else {
-                gobj_send_event(GetFocus(), event, 0, gobj);
-            }
-            return;
-        }
-
-    } else {
-
-        hgobj wn_display = get_top_display_window(gobj);
-        if(gobj_typeof_gclass(wn_display, GCLASS_WN_TTY_MIRROR_NAME)) {
-            GBUFFER *gbuf = gbuf_string2base64(buf->base, nread);
-            if(!gbuf) {
-                log_error(LOG_OPT_TRACE_STACK,
+            hgobj dst_gobj = gobj_find_unique_gobj(dst, FALSE);
+            if(!dst_gobj) {
+                log_error(0,
                     "gobj",         "%s", gobj_full_name(gobj),
                     "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_MEMORY_ERROR,
-                    "msg",          "%s", "gbuf_string2base64() FAILED",
+                    "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                    "msg",          "%s", "unique gobj NOT FOUND",
+                    "unique",       "%s", dst,
                     NULL
                 );
-                return;
+            } else {
+                gobj_send_event(dst_gobj, event, 0, gobj);
+                SetFocus(priv->gobj_editline);
             }
-
-            json_t *kw_tty = json_pack("{s:s}",
-                "content64", gbuf_cur_rd_pointer(gbuf)
-            );
-            gobj_send_event(wn_display, "EV_KEYBOARD", kw_tty, gobj);
-            gbuf_decref(gbuf);
             return;
         }
 
+        /*
+         *  Level 2, top window or editline functions
+         */
+        kt = event_by_key(keytable2, b);
+        if(kt) {
+            const char *dst = kt->dst_gobj;
+            const char *event = kt->event;
 
-        for(int i=0; i<nread; i++) {
-            process_key(gobj, buf->base[i]);
+            hgobj dst_gobj;
+            if(strcmp(dst, "__top_display_window__")==0) {
+                dst_gobj = __top_display_window__;
+            } else {
+                dst_gobj = gobj_find_unique_gobj(dst, FALSE);
+            }
+            if(!dst_gobj) {
+                log_error(0,
+                    "gobj",         "%s", gobj_full_name(gobj),
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                    "msg",          "%s", "unique gobj NOT FOUND",
+                    "unique",       "%s", dst,
+                    NULL
+                );
+            } else {
+                if(gobj_event_in_input_event_list(dst_gobj, event, 0)) {
+                    gobj_send_event(dst_gobj, event, 0, gobj);
+                    if(strcmp(event, "EV_EDITLINE_DEL_LINE")==0) {
+                        msg2statusline(gobj, 0, "");
+                    }
+                    SetFocus(priv->gobj_editline);
+                    return;
+                }
+            }
         }
-    }
+
+        /*
+         *  Level 3, chars to window with focus
+         */
+        GBUFFER *gbuf = gbuf_create(nread, nread, 0, 0);
+        gbuf_append(gbuf, buf->base, nread);
+
+        json_t *kw_keychar = json_pack("{s:I}",
+            "gbuffer", (json_int_t)(size_t)gbuf
+        );
+        gobj_send_event(GetFocus(), "EV_KEYCHAR", kw_keychar, gobj);
+
+    } while(0);
 }
 
 /***************************************************************************

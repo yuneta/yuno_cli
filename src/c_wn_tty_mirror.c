@@ -360,20 +360,23 @@ PRIVATE int ac_paint(hgobj gobj, const char *event, json_t *kw, hgobj src)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int ac_keyboard(hgobj gobj, const char *event, json_t *kw, hgobj src)
+PRIVATE int ac_keychar(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     const char *name = gobj_read_str_attr(gobj, "name");
-    const char *content64 = kw_get_str(kw, "content64", 0, 0);
     hgobj gobj_cmd = gobj_read_pointer_attr(gobj, "user_data");
+    GBUFFER *gbuf = (GBUFFER *)(size_t)kw_get_int(kw, "gbuffer", 0, KW_REQUIRED);
+    GBUF_INCREF(gbuf);
+    GBUFFER *gbuf_content64 = gbuf_encodebase64(gbuf);
+    char *content64 = gbuf_cur_rd_pointer(gbuf_content64);
 
     json_t *kw_command = json_pack("{s:s, s:s}",
         "name", name,
         "content64", content64
     );
 
-    json_t *webix = gobj_command(gobj_cmd, "write-tty", kw_command, gobj);
-    json_decref(webix);
+    json_decref(gobj_command(gobj_cmd, "write-tty", kw_command, gobj));
 
+    GBUF_DECREF(gbuf_content64);
     KW_DECREF(kw);
     return 0;
 }
@@ -600,7 +603,7 @@ PRIVATE int ac_top(hgobj gobj, const char *event, json_t *kw, hgobj src)
  *                          FSM
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = {
-    {"EV_KEYBOARD",         0,  0,  0},
+    {"EV_KEYCHAR",         0,  0,  0},
     {"EV_WRITE_TTY",        0,  0,  0},
     {"EV_PAINT",            0,  0,  0},
     {"EV_MOVE",             0,  0,  0},
@@ -625,7 +628,7 @@ PRIVATE const char *state_names[] = {
 };
 
 PRIVATE EV_ACTION ST_IDLE[] = {
-    {"EV_KEYBOARD",         ac_keyboard,            0},
+    {"EV_KEYCHAR",          ac_keychar,             0},
     {"EV_WRITE_TTY",        ac_write_tty,           0},
     {"EV_MOVE",             ac_move,                0},
     {"EV_SIZE",             ac_size,                0},

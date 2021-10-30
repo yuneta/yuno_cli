@@ -863,9 +863,14 @@ PRIVATE int ac_keychar(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
     PRIVATE_DATA *l = priv;
-    int c = kw_get_int(kw, "char", 0, KW_REQUIRED);
+    GBUFFER *gbuf = (GBUFFER *)(size_t)kw_get_int(kw, "gbuffer", 0, KW_REQUIRED);
+    char *p = gbuf_cur_rd_pointer(gbuf);
+    int len = gbuf_leftbytes(gbuf);
 
-    linenoiseEditInsert(l, c);
+    for(int i=0; i<len; i++) {
+        int c = p[i];
+        linenoiseEditInsert(l, c);  // ascii editor, no utf-8
+    }
 
     KW_DECREF(kw);
     return 0;
@@ -1301,8 +1306,7 @@ PRIVATE const char *state_names[] = {
 };
 
 PRIVATE EV_ACTION ST_IDLE[] = {
-    {"EV_KEYCHAR",          ac_keychar,         0},
-
+    {"EV_KEYCHAR",                  ac_keychar,         0},
     {"EV_EDITLINE_MOVE_START",      ac_move_start,      0},
     {"EV_EDITLINE_MOVE_LEFT",       ac_move_left,       0},
     {"EV_EDITLINE_DEL_CHAR",        ac_del_char,        0},
