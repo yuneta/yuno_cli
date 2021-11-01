@@ -86,9 +86,6 @@ PRIVATE void do_close(hgobj gobj);
 PRIVATE hgobj create_display_window(hgobj gobj, const char* name, json_t* kw_display_window);
 PRIVATE hgobj get_display_window(hgobj gobj, const char *name);
 PRIVATE int destroy_display_window(hgobj gobj, const char *name);
-PRIVATE hgobj create_tty_mirror_window(hgobj gobj, const char* name, json_t* kw_tty_mirror_window);
-PRIVATE hgobj get_tty_mirror_window(hgobj gobj, const char *name);
-PRIVATE int destroy_tty_mirror_window(hgobj gobj, const char *name);
 PRIVATE hgobj create_static(hgobj gobj, const char* name, json_t* kw_static);
 PRIVATE int destroy_static(hgobj gobj, const char *name);
 PRIVATE int set_top_window(hgobj gobj, const char *name);
@@ -1435,67 +1432,6 @@ PRIVATE int destroy_display_window(hgobj gobj, const char *name)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE hgobj create_tty_mirror_window(hgobj gobj, const char *name, json_t *kw_tty_mirror_window)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    if(!kw_tty_mirror_window) {
-        kw_tty_mirror_window = json_pack(
-            "{s:s, s:s}",
-            "bg_color", "black",
-            "fg_color", "white"
-        );
-    }
-    hgobj wn_display = gobj_create(
-        name,
-        GCLASS_WN_TTY_MIRROR,
-        kw_tty_mirror_window,
-        priv->gobj_workareabox
-    );
-    gobj_start(wn_display);
-
-    return wn_display;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE hgobj get_tty_mirror_window(hgobj gobj, const char* name)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    hgobj gobj_display = gobj_child_by_name(priv->gobj_workareabox, name, 0);
-    if(!gobj_display) {
-        log_error(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "gobj_child_by_name() FAILED",
-            "name",         "%s", name,
-            NULL
-        );
-    }
-    return gobj_display;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE int destroy_tty_mirror_window(hgobj gobj, const char *name)
-{
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    gobj_destroy_named_tree(
-        priv->gobj_workareabox,
-        name
-    );
-
-    return 0;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
 PRIVATE hgobj create_static(hgobj gobj, const char *name, json_t *kw_static)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -2526,17 +2462,6 @@ PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
 
     json_object_set_new(priv->jn_window_counters, agent_name, json_integer(0));
 
-    // Delete tty's
-    json_t *consoles = gobj_kw_get_user_data(src, "consoles", 0, KW_EXTRACT);
-    if(consoles) {
-        const char *window_tty_mirror_name; json_t *jn_;
-        json_object_foreach(consoles, window_tty_mirror_name, jn_) {
-            destroy_static(gobj, window_tty_mirror_name);
-            destroy_tty_mirror_window(gobj, window_tty_mirror_name);
-        }
-        json_decref(consoles);
-    }
-
     destroy_static(gobj, agent_name);
     destroy_display_window(gobj, agent_name);
 
@@ -2573,6 +2498,8 @@ PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE int ac_mt_command_answer(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
     hgobj wn_display = gobj_read_pointer_attr(src, "user_data");
     display_webix_result(
         gobj,
@@ -2581,6 +2508,7 @@ PRIVATE int ac_mt_command_answer(hgobj gobj, const char *event, json_t *kw, hgob
     );
 
     new_line(gobj, wn_display);
+    SetFocus(priv->gobj_editline);
 
     return 0;
 }
@@ -2750,8 +2678,8 @@ PRIVATE int ac_view_config(hgobj gobj, const char *event, json_t *kw, hgobj src)
     //log_debug_printf("save_local_json %s", path);
     edit_json(gobj, path);
 
-    msg2statusline(gobj, 0, "");
     new_line(gobj, wn_display);
+    msg2statusline(gobj, 0, "");
 
     KW_DECREF(kw);
     return 0;
@@ -2811,8 +2739,8 @@ PRIVATE int ac_read_json(hgobj gobj, const char *event, json_t *kw, hgobj src)
     //log_debug_printf("save_local_json %s", path);
     edit_json(gobj, path);
 
-    msg2statusline(gobj, 0, "");
     new_line(gobj, wn_display);
+    msg2statusline(gobj, 0, "");
 
     KW_DECREF(kw);
     return 0;
@@ -2872,8 +2800,8 @@ PRIVATE int ac_read_file(hgobj gobj, const char *event, json_t *kw, hgobj src)
     //log_debug_printf("save_local_json %s", path);
     edit_json(gobj, path);
 
-    msg2statusline(gobj, 0, "");
     new_line(gobj, wn_display);
+    msg2statusline(gobj, 0, "");
 
     KW_DECREF(kw);
     return 0;
@@ -2993,35 +2921,35 @@ PRIVATE int ac_timeout(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE int ac_tty_mirror_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    const char *agent_name = gobj_name(gobj_read_pointer_attr(src, "user_data"));
-
-    json_t *jn_data = kw_get_dict(kw, "data", 0, KW_EXTRACT|KW_REQUIRED);
-    const char *tty_name = kw_get_str(jn_data, "name", "", KW_REQUIRED);
-
-    char window_tty_mirror_name[NAME_MAX];
-    snprintf(window_tty_mirror_name, sizeof(window_tty_mirror_name), "%s(%s)", agent_name, tty_name);
-
-    /*
-     *  Create display window of external agent
-     */
-    hgobj wn_tty_mirror_disp = create_tty_mirror_window(gobj, window_tty_mirror_name, jn_data);
-    if(wn_tty_mirror_disp) {
-        char name_[NAME_MAX+20];
-        snprintf(name_, sizeof(name_), "consoles`%s", window_tty_mirror_name);
-        gobj_kw_get_user_data( // save in input gate
-            src,
-            name_,
-            json_true(), // owned
-            KW_CREATE
-        );
-            gobj_write_pointer_attr(wn_tty_mirror_disp, "user_data", src);
-
-        /*
-         *  Create button window of console (right now implemented as static window)
-         */
-        create_static(gobj, window_tty_mirror_name, 0);
-        set_top_window(gobj, window_tty_mirror_name);
-    }
+//     const char *agent_name = gobj_name(gobj_read_pointer_attr(src, "user_data"));
+//
+//     json_t *jn_data = kw_get_dict(kw, "data", 0, KW_EXTRACT|KW_REQUIRED);
+//     const char *tty_name = kw_get_str(jn_data, "name", "", KW_REQUIRED);
+//
+//     char window_tty_mirror_name[NAME_MAX];
+//     snprintf(window_tty_mirror_name, sizeof(window_tty_mirror_name), "%s(%s)", agent_name, tty_name);
+//
+//     /*
+//      *  Create display window of external agent
+//      */
+//     hgobj wn_tty_mirror_disp = create_tty_mirror_window(gobj, window_tty_mirror_name, jn_data);
+//     if(wn_tty_mirror_disp) {
+//         char name_[NAME_MAX+20];
+//         snprintf(name_, sizeof(name_), "consoles`%s", window_tty_mirror_name);
+//         gobj_kw_get_user_data( // save in input gate
+//             src,
+//             name_,
+//             json_true(), // owned
+//             KW_CREATE
+//         );
+//             gobj_write_pointer_attr(wn_tty_mirror_disp, "user_data", src);
+//
+//         /*
+//          *  Create button window of console (right now implemented as static window)
+//          */
+//         create_static(gobj, window_tty_mirror_name, 0);
+//         set_top_window(gobj, window_tty_mirror_name);
+//     }
 
     KW_DECREF(kw);
     return 0;
@@ -3037,27 +2965,27 @@ PRIVATE int ac_tty_mirror_close(hgobj gobj, const char *event, json_t *kw, hgobj
         return 0;
     }
 
-    const char *agent_name = gobj_name(gobj_read_pointer_attr(src, "user_data"));
-    const char *tty_name = kw_get_str(kw, "data`name", 0, 0);
-    char window_tty_mirror_name[NAME_MAX];
-    snprintf(window_tty_mirror_name, sizeof(window_tty_mirror_name), "%s(%s)", agent_name, tty_name);
-
-    hgobj wn_tty_mirror_disp = get_tty_mirror_window(gobj, window_tty_mirror_name);
-    if(wn_tty_mirror_disp) {
-        char name_[NAME_MAX];
-        snprintf(name_, sizeof(name_), "consoles`%s", tty_name);
-        json_decref(gobj_kw_get_user_data( // delete in input gate
-            src,
-            name_,
-            json_true(), // owned
-            KW_EXTRACT
-        ));
-
-        destroy_static(gobj, window_tty_mirror_name);
-        destroy_tty_mirror_window(gobj, window_tty_mirror_name);
-    }
-
-    set_top_window(gobj, agent_name);
+//     const char *agent_name = gobj_name(gobj_read_pointer_attr(src, "user_data"));
+//     const char *tty_name = kw_get_str(kw, "data`name", 0, 0);
+//     char window_tty_mirror_name[NAME_MAX];
+//     snprintf(window_tty_mirror_name, sizeof(window_tty_mirror_name), "%s(%s)", agent_name, tty_name);
+//
+//     hgobj wn_tty_mirror_disp = get_tty_mirror_window(gobj, window_tty_mirror_name);
+//     if(wn_tty_mirror_disp) {
+//         char name_[NAME_MAX];
+//         snprintf(name_, sizeof(name_), "consoles`%s", tty_name);
+//         json_decref(gobj_kw_get_user_data( // delete in input gate
+//             src,
+//             name_,
+//             json_true(), // owned
+//             KW_EXTRACT
+//         ));
+//
+//         destroy_static(gobj, window_tty_mirror_name);
+//         destroy_tty_mirror_window(gobj, window_tty_mirror_name);
+//     }
+//
+//     set_top_window(gobj, agent_name);
 
     KW_DECREF(kw);
     return 0;
@@ -3068,21 +2996,21 @@ PRIVATE int ac_tty_mirror_close(hgobj gobj, const char *event, json_t *kw, hgobj
  ***************************************************************************/
 PRIVATE int ac_tty_mirror_data(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    const char *agent_name = gobj_name(gobj_read_pointer_attr(src, "user_data"));
-
-    json_t *jn_data = kw_get_dict(kw, "data", 0, KW_EXTRACT|KW_REQUIRED);
-    if(jn_data) {
-        const char *tty_name = kw_get_str(jn_data, "name", 0, 0);
-        char window_tty_mirror_name[NAME_MAX];
-        snprintf(window_tty_mirror_name, sizeof(window_tty_mirror_name), "%s(%s)", agent_name, tty_name);
-
-        hgobj wn_tty_mirror_disp = get_tty_mirror_window(gobj, window_tty_mirror_name);
-        if(wn_tty_mirror_disp) {
-            gobj_send_event(wn_tty_mirror_disp, "EV_WRITE_TTY", jn_data, src);
-        } else {
-            json_decref(jn_data);
-        }
-    }
+//     const char *agent_name = gobj_name(gobj_read_pointer_attr(src, "user_data"));
+//
+//     json_t *jn_data = kw_get_dict(kw, "data", 0, KW_EXTRACT|KW_REQUIRED);
+//     if(jn_data) {
+//         const char *tty_name = kw_get_str(jn_data, "name", 0, 0);
+//         char window_tty_mirror_name[NAME_MAX];
+//         snprintf(window_tty_mirror_name, sizeof(window_tty_mirror_name), "%s(%s)", agent_name, tty_name);
+//
+//         hgobj wn_tty_mirror_disp = get_tty_mirror_window(gobj, window_tty_mirror_name);
+//         if(wn_tty_mirror_disp) {
+//             gobj_send_event(wn_tty_mirror_disp, "EV_WRITE_TTY", jn_data, src);
+//         } else {
+//             json_decref(jn_data);
+//         }
+//     }
 
     KW_DECREF(kw);
     return 0;

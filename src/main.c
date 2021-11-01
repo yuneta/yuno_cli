@@ -113,7 +113,6 @@ static void register_yuno_and_more(void)
      *  Register gwin
      *-------------------*/
     gobj_register_gclass(GCLASS_WN_STDSCR);
-    gobj_register_gclass(GCLASS_PTY);
 
     /*--------------------*
      *  Register service
@@ -159,8 +158,6 @@ int main(int argc, char *argv[])
             gobj_set_gobj_trace(0, "create_delete2", TRUE, 0);
             gobj_set_gobj_trace(0, "start_stop", TRUE, 0);
             gobj_set_gclass_trace(GCLASS_CLI, "trace-kb", TRUE);
-            gobj_set_gclass_trace(GCLASS_PTY, "traffic", TRUE);
-            gobj_set_gclass_trace(GCLASS_WN_TTY_MIRROR, "messages", TRUE);
             argc = 1;
         } else if(strcmp(argv[1], "verbose")==0) {
             gobj_set_gclass_trace(GCLASS_IEVENT_CLI, "ievents2", TRUE);

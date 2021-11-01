@@ -526,20 +526,22 @@ PUBLIC int SetFocus(hgobj gobj)
                 trace_msg("👁 👁 ⏪ %s", gobj_short_name(__gobj_with_focus__));
             }
         }
-        __gobj_with_focus__ = gobj;
-        if(gobj_send_event(__gobj_with_focus__, "EV_SETFOCUS", 0, 0)<0) {
-            // Si el nuevo focus no acepta pon el default focus
-            __gobj_with_focus__ = __gobj_default_focus__;
-            gobj_send_event(__gobj_default_focus__, "EV_SETFOCUS", 0, 0);
-            if(gobj_trace_level(gobj) & (TRACE_MACHINE|TRACE_EV_KW)) {
-                trace_msg("👁 👁 ⏩ %s", gobj_short_name(__gobj_with_focus__));
-            }
-        } else {
-            if(gobj_trace_level(gobj) & (TRACE_MACHINE|TRACE_EV_KW)) {
-                trace_msg("👁 👁 ⏩ %s", gobj_short_name(__gobj_with_focus__));
-            }
+    }
+
+    __gobj_with_focus__ = gobj;
+    if(gobj_send_event(__gobj_with_focus__, "EV_SETFOCUS", 0, 0)<0) {
+        // Si el nuevo focus no acepta pon el default focus
+        __gobj_with_focus__ = __gobj_default_focus__;
+        gobj_send_event(__gobj_default_focus__, "EV_SETFOCUS", 0, 0);
+        if(gobj_trace_level(gobj) & (TRACE_MACHINE|TRACE_EV_KW)) {
+            trace_msg("👁 👁 ⏩ %s", gobj_short_name(__gobj_with_focus__));
+        }
+    } else {
+        if(gobj_trace_level(gobj) & (TRACE_MACHINE|TRACE_EV_KW)) {
+            trace_msg("👁 👁 ⏩ %s", gobj_short_name(__gobj_with_focus__));
         }
     }
+
     return 0;
 }
 

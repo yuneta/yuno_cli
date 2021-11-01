@@ -63,8 +63,6 @@ SET (YUNO_SRCS
     src/c_wn_list.c
     src/c_wn_toolbar.c
     src/c_wn_static.c
-    src/c_wn_tty_mirror.c
-    src/c_pty.c
 )
 SET (YUNO_HDRS
     src/yuno_yuneta_cli.h
@@ -77,8 +75,6 @@ SET (YUNO_HDRS
     src/c_wn_list.h
     src/c_wn_toolbar.h
     src/c_wn_static.h
-    src/c_wn_tty_mirror.h
-    src/c_pty.h
 )
 
 ##############################################

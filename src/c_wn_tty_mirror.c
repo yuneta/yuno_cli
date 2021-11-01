@@ -557,9 +557,6 @@ PRIVATE int ac_write_tty(hgobj gobj, const char *event, json_t *kw, hgobj src)
 
     chtype c;
     while(get_clean_char(gobj, gbuf, &c)) {
-        if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
-            trace_msg("c = x%02X %c", c, c);
-        }
         if(priv->wn) {
             waddch(priv->wn, c);
         }

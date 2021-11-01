@@ -9,7 +9,6 @@
 
 #include <yuneta.h>
 #include "c_wn_stdscr.h"
-#include "c_pty.h"
 
 /**rst**
 
