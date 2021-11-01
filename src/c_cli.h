@@ -18,7 +18,6 @@
 #include "c_wn_list.h"
 #include "c_wn_toolbar.h"
 #include "c_wn_static.h"
-#include "c_wn_tty_mirror.h"
 
 /**rst**
 
