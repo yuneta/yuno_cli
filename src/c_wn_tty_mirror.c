@@ -19,6 +19,33 @@
 /***************************************************************************
  *              Constants
  ***************************************************************************/
+#define VT100_BUF           8
+#define VT100_PARAMS        10
+#define mode_bright         1
+#define mode_dim            2
+#define mode_underscore     8
+#define mode_blink          16
+#define mode_reverse        64
+#define mode_hidden         128
+
+// this extra one to support graphics characters (a bit)
+#define mode_graphics       32
+
+#define mode_wide           1
+#define mode_tall_top       2
+#define mode_tall_bot       4
+
+#define m_black             0
+#define m_red               1
+#define m_green             2
+#define m_yellow            3
+#define m_blue              4
+#define m_magenta           5
+#define m_cyan              6
+#define m_white             7
+
+#define m_black_n_white   m_black+16*m_white
+#define m_white_n_black   m_white+16*m_black
 
 /***************************************************************************
  *              Structures
@@ -27,7 +54,6 @@
 /***************************************************************************
  *              Prototypes
  ***************************************************************************/
-PRIVATE FILE *open_tty(char *path);
 PRIVATE int clrscr(hgobj gobj);
 
 
@@ -79,14 +105,7 @@ typedef struct _PRIVATE_DATA {
     const char *bg_color;
     int32_t scroll_size;
 
-    SCREEN *screen;     /* this screen - curses internal data */
-    FILE *input;
-    FILE *output;
-
     WINDOW *wn;     // ncurses window handler
-    PANEL *panel;   // panel handler
-
-    hgobj gobj_tty;
 
     int32_t cx;
     int32_t cy;
@@ -128,25 +147,6 @@ PRIVATE void mt_create(hgobj gobj)
     SET_PRIV(cx,                        gobj_read_int32_attr)
     SET_PRIV(cy,                        gobj_read_int32_attr)
     SET_PRIV(scroll_size,               gobj_read_int32_attr)
-
-    int x = gobj_read_int32_attr(gobj, "x");
-    int y = gobj_read_int32_attr(gobj, "y");
-    int cx = gobj_read_int32_attr(gobj, "cx");
-    int cy = gobj_read_int32_attr(gobj, "cy");
-
-    if(1) {
-        priv->wn = newwin(cy, cx, y, x);
-        if(!priv->wn) {
-            log_error(0,
-                "gobj",         "%s", gobj_full_name(gobj),
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-                "msg",          "%s", "newwin() FAILED",
-                NULL
-            );
-        }
-        scrollok(priv->wn, true);
-    }
 }
 
 /***************************************************************************
@@ -174,38 +174,22 @@ PRIVATE int mt_start(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    /*
-     *  Create pseudoterminal
-     */
-    if(0) {
-        json_t *kw_pty = json_pack("{s:s, s:b}",
-            "process", "screen",
-            "no_output", 0
-            // TODO get and pass rows,cols
+    int x = gobj_read_int32_attr(gobj, "x");
+    int y = gobj_read_int32_attr(gobj, "y");
+    int cx = gobj_read_int32_attr(gobj, "cx");
+    int cy = gobj_read_int32_attr(gobj, "cy");
+
+    priv->wn = newwin(cy, cx, y, x);
+    if(!priv->wn) {
+        log_error(0,
+            "gobj",         "%s", gobj_full_name(gobj),
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+            "msg",          "%s", "newwin() FAILED",
+            NULL
         );
-        priv->gobj_tty = gobj_create(gobj_name(gobj), GCLASS_PTY, kw_pty, gobj);
-        if(priv->gobj_tty) {
-            gobj_set_volatil(priv->gobj_tty, TRUE);
-        }
-        gobj_start(priv->gobj_tty);
-
     }
-
-    if(0) {
-        priv->input = priv->output = open_tty("/");
-
-        cbreak();
-        noecho();
-        scrollok(stdscr, TRUE);
-        box(stdscr, 0, 0);
-
-        int x = gobj_read_int32_attr(gobj, "x");
-        int y = gobj_read_int32_attr(gobj, "y");
-        int cx = gobj_read_int32_attr(gobj, "cx");
-        int cy = gobj_read_int32_attr(gobj, "cy");
-        priv->wn = newwin(cy, cx, y, x);
-    }
-
+    scrollok(priv->wn, true);
 
     return 0;
 }
@@ -217,19 +201,9 @@ PRIVATE int mt_stop(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
-    if(priv->gobj_tty) {
-        if(!gobj_is_destroying(priv->gobj_tty)) {
-            gobj_stop(priv->gobj_tty);
-        }
-    }
-
     if(priv->wn) {
         delwin(priv->wn);
         priv->wn = 0;
-    }
-    if(priv->screen) {
-        endwin();
-        priv->screen = 0;
     }
 
     return 0;
@@ -241,12 +215,7 @@ PRIVATE int mt_stop(hgobj gobj)
 PRIVATE void mt_destroy(hgobj gobj)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-    if(priv->panel) {
-        del_panel(priv->panel);
-        priv->panel = 0;
-        update_panels();
-        doupdate();
-    }
+
     if(priv->wn) {
         delwin(priv->wn);
         priv->wn = 0;
@@ -268,66 +237,243 @@ PRIVATE void mt_destroy(hgobj gobj)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE FILE *open_tty(char *path)
-{
-    FILE *fp;
-    int amaster;
-    int aslave;
-    char slave_name[1024];
-    char s_option[sizeof(slave_name) + 80];
-    const char *xterm_prog = 0;
-
-    if ((xterm_prog = getenv("XTERM_PROG")) == 0)
-        xterm_prog = "xterm";
-
-    if (openpty(&amaster, &aslave, slave_name, 0, 0) != 0
-        || strlen(slave_name) > sizeof(slave_name) - 1) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "openpty() FAILED",
-            NULL
-        );
-    }
-    if (strrchr(slave_name, '/') == 0) {
-        errno = EISDIR;
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "slave_name FAILED",
-            NULL
-        );
-    }
-    snprintf(s_option, sizeof(s_option),
-                "-S%s/%d", slave_name, aslave);
-    if (fork()) {
-        execlp(xterm_prog, xterm_prog, s_option, "-title", path, (char *) 0);
-        _exit(0);
-    }
-    fp = fdopen(amaster, "r+");
-    if (fp == 0) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "fdopen() FAILED",
-            NULL
-        );
-    }
-    //assert(fp != 0);
-    return fp;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
 PRIVATE int clrscr(hgobj gobj)
 {
 //     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE BOOL get_clean_char(hgobj gobj, GBUFFER *gbuf, chtype *pc)
+{
+    char vt100[VT100_BUF];
+    memset(vt100, 0, VT100_BUF);
+    int   vt100_ptr = 0;
+    int vt100_params[VT100_PARAMS];
+    int param_ptr = 0;
+    int loop;
+    int q_mark = 0;
+    char current_mode = 0;
+    char current_col = m_white_n_black;
+
+    char *p;
+    while((p=gbuf_get(gbuf, 1))!=0) {
+        int c = *p;
+
+        switch(c) {
+        case 27: // ESC
+            {
+                char b = gbuf_getchar(gbuf);
+                switch (b) { // ESC switch
+                case '7': // cursor save
+                    //cX_save = cX; cY_save = cY;
+                    break;
+                case '8': // cursor restore
+                    //cX = cX_save; cY = cY_save;
+                    break;
+
+                case '#':
+                    {
+                        int d = gbuf_getchar(gbuf);
+                        switch (d) {
+                        case '3': // Double Height top line
+                            //out_size[cY] = mode_tall_top;
+                            break;
+                        case '4': // Double Height bottom line
+                            //out_size[cY] = mode_tall_bot;
+                            break;
+                        case '5': // Single width line
+                            //out_size[cY] = 0;
+                            break;
+                        case '6': // Double width line
+                            //out_size[cY] = mode_wide;
+                            break;
+                        default: // slurp
+                            break;
+                        }
+                    }
+                    break;
+                case 'P': // Device Control String, we slurp it up until ESC
+                    //while (((b = fgetc(f)) != 27) && !feof(f)) ;
+                    {
+                        int d = gbuf_getchar(gbuf);
+                        if(d) {} // avoid warning
+                    }
+                    break;
+                case '\\': // Termimation code for a Device Control String
+                    break;
+
+                case '(': // Choose character set, we ignore
+                    {
+                        int d = gbuf_getchar(gbuf);
+                        switch (d) {
+                        case '0':
+                            //current_mode |= mode_graphics;
+                            break;
+                        default:
+                            //current_mode &= (0xff-mode_graphics);
+                            break;
+                        }
+                    }
+                    break;
+
+                case ']':
+                case '[':
+                    {
+                        vt100_ptr = 0;
+                        // unset previous
+                        for (loop = 0; loop < param_ptr; loop++) {
+                            vt100_params[loop] = 0;
+                        }
+                        param_ptr = 0;
+
+                        int d = ';'; q_mark = 0;
+                        while (((d == ';') && (vt100_ptr < VT100_BUF))) {
+                            while (((d = gbuf_getchar(gbuf)) <= '9') && !d)   {
+                                vt100[vt100_ptr] = d;
+                                vt100_ptr++;
+                            }
+                            if (d == '?') {
+                                q_mark = 1;
+                                d = ';';
+                            } else {
+                                vt100[vt100_ptr] = 0;
+                                vt100_params[param_ptr++] = atoi(vt100);
+                                vt100_ptr = 0;
+                            }
+                        }
+                        if (q_mark == 1) {
+                            switch(d) { // q_mark switch
+                            case 8:
+                                //cX--;
+                                break;
+                            case 9:
+                                //cX = (cX / TAB) + TAB;
+                                break;
+                            case 10:
+                                //cX = 0;
+                            case 11:
+                            case 12:
+                                //cY++;
+                                break;
+                            case 13:
+                                //cX = 0;
+                                break;
+                            default:
+                                break;
+                            }
+                        } else {
+                            switch (d) { // ESC action switch
+                            case 'H': // tab (row, col)
+                            case 'f':
+                                //cY = (vt100_params[0] == 0) ? 0 : vt100_params[0] - 1;
+                                //cX = (vt100_params[1] == 0) ? 0 :   vt100_params[1] - 1;
+                                break;
+                            case 'A': // cursor up
+                                //cY -= (vt100_params[0] > 0) ? vt100_params[0] : 1;
+                                break;
+                            case 'B': // cursor down
+                                //cY += (vt100_params[0] > 0) ? vt100_params[0] : 1;
+                                break;
+                            case 'C': // cursor right
+                                //cX += (vt100_params[0] > 0) ? vt100_params[0] : 1;
+                                break;
+                            case 'D': // cursor left
+                                //cX -= (vt100_params[0] > 0) ? vt100_params[0] : 1;
+                                break;
+                            case 'd': // vertical postion absolute
+                                //cY = (vt100_params[0] == 0) ? 0 : vt100_params[0] - 1;
+                                break;
+                            case 'e': // vertical postion relative
+                                //cY += vt100_params[0];
+                                break;
+                            case 's': // cursor save
+                                //cX_save = cX; cY_save = cY;
+                                break;
+                            case 'u': // cursor restore
+                                //cX = cX_save; cY = cY_save;
+                                break;
+                            case 'J' : // erase screen (from cursor)
+                                switch (vt100_params[0]) {
+                                case 1:
+                                    //clear_cells(0, cX - cY*width);
+                                    break;
+                                case 2:
+                                    //clear_cells(0, width*height);
+                                    break;
+                                default:
+                                    //clear_cells(cX + cY*width, width*height - (cX + cY*width));
+                                    ;
+                                }
+                                break;
+                            case 'K' : // erase line (from cursor)
+                                switch (vt100_params[0]) {
+                                case 1:
+                                    //clear_cells(cY*width, cX);
+                                    break;
+                                case 2:
+                                    //clear_cells(cY*width, width);
+                                    break;
+                                default:
+                                    //clear_cells(cY*width + cX, width-cX);
+                                    ;
+                                }
+                                break;
+                            case 'm' : // color info
+                                for (loop = 0; loop < param_ptr; loop++) {
+                                    if (vt100_params[loop] <= 8) {
+                                        if (vt100_params[loop] == 0) {
+                                            // reset all (graphics is not a mode)
+                                            current_mode &= mode_graphics;
+                                        } else {
+                                            current_mode |= 1<<(vt100_params[loop]-1);
+                                        }
+                                    }
+
+                                    if ((vt100_params[loop] >= 30) && (vt100_params[loop] <= 37)) {
+                                        current_col = (vt100_params[loop]-30) | (current_col&0xf0);
+                                    }
+                                    if ((vt100_params[loop] >= 40) && (vt100_params[loop] <= 47)) {
+                                        current_col = ((vt100_params[loop]-40)*16) | (current_col&0xf);
+                                    }
+                                }
+                                break;
+                            case 'r' : // DEC termial top and bottom margin scroll free areas
+                            case 'h' : // Mode Set (4 = insert; 20 = auto linefeed)
+                            case 'l' : // Mode Reset   (4 = insert; 20 = auto linefeed)
+                            case '?' : // more stuff to ignore...
+                                break;
+                            default:
+                                break;
+                            }
+                            break;
+                        } // else
+                    }
+                    break;
+                default:
+                    log_error(0,
+                        "gobj",         "%s", gobj_full_name(gobj),
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                        "msg",          "%s", "ESC char UNKNOWN",
+                        "char",         "%d", b,
+                        NULL
+                    );
+                    gbuf_ungetc(gbuf, b);
+                }
+            }
+            break;
+
+        default:
+            *pc = c;
+            return TRUE;
+        }
+
+    }
+    return FALSE;
 }
 
 
@@ -358,7 +504,7 @@ PRIVATE int ac_paint(hgobj gobj, const char *event, json_t *kw, hgobj src)
 }
 
 /***************************************************************************
- *
+ *  Keyboard input from local, send to remote
  ***************************************************************************/
 PRIVATE int ac_keychar(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
@@ -382,23 +528,11 @@ PRIVATE int ac_keychar(hgobj gobj, const char *event, json_t *kw, hgobj src)
 }
 
 /***************************************************************************
- *
+ *  Remote response
  ***************************************************************************/
 PRIVATE int ac_write_tty(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    if(src == priv->gobj_tty) {
-        log_error(0,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "What fck?",
-            NULL
-        );
-        KW_DECREF(kw);
-        return 0;
-    }
 
     const char *content64 = kw_get_str(kw, "content64", 0, 0);
     if(empty_string(content64)) {
@@ -421,24 +555,17 @@ PRIVATE int ac_write_tty(hgobj gobj, const char *event, json_t *kw, hgobj src)
         log_debug_dump(0, p, len,  "write_tty");
     }
 
-    if(priv->output) {
-        fwrite(p, len, 1, priv->output);
-    } else
-
-    if(priv->wn) {
-        while(len-- > 0) {
-            waddch(priv->wn, *p);
-            wnoutrefresh(priv->wn);
+    chtype c;
+    while(get_clean_char(gobj, gbuf, &c)) {
+        if(gobj_trace_level(gobj) & TRACE_MESSAGES) {
+            trace_msg("c = x%02X %c", c, c);
         }
-        doupdate();
+        if(priv->wn) {
+            waddch(priv->wn, c);
+        }
     }
-
-    if(priv->gobj_tty) {
-        GBUF_INCREF(gbuf);
-        json_t *kw_tty = json_pack("{s:I}",
-            "gbuffer", (json_int_t)(size_t)gbuf
-        );
-        gobj_send_event(priv->gobj_tty, "EV_WRITE_TTY", kw_tty, gobj);
+    if(priv->wn) {
+        wrefresh(priv->wn);
     }
 
     GBUF_DECREF(gbuf);
@@ -529,6 +656,20 @@ PRIVATE int ac_clrscr(hgobj gobj, const char *event, json_t *kw, hgobj src)
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE int ac_setfocus(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    PRIVATE_DATA *priv = gobj_priv_data(gobj);
+
+    if(priv->wn) {
+    }
+
+    KW_DECREF(kw);
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PRIVATE int ac_move(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -538,12 +679,7 @@ PRIVATE int ac_move(hgobj gobj, const char *event, json_t *kw, hgobj src)
     gobj_write_int32_attr(gobj, "x", x);
     gobj_write_int32_attr(gobj, "y", y);
 
-    if(priv->panel) {
-        //log_debug_printf(0, "move panel x %d y %d %s", x, y, gobj_name(gobj));
-        move_panel(priv->panel, y, x);
-        update_panels();
-        doupdate();
-    } else if(priv->wn) {
+    if(priv->wn) {
         //log_debug_printf(0, "move window x %d y %d %s", x, y, gobj_name(gobj));
         mvwin(priv->wn, y, x);
         wrefresh(priv->wn);
@@ -565,12 +701,7 @@ PRIVATE int ac_size(hgobj gobj, const char *event, json_t *kw, hgobj src)
     gobj_write_int32_attr(gobj, "cx", cx);
     gobj_write_int32_attr(gobj, "cy", cy);
 
-    if(priv->panel) {
-        //log_debug_printf(0, "size panel cx %d cy %d %s", cx, cy, gobj_name(gobj));
-        wresize(priv->wn, cy, cx);
-        update_panels();
-        doupdate();
-    } else if(priv->wn) {
+    if(priv->wn) {
         //log_debug_printf(0, "size window cx %d cy %d %s", cx, cy, gobj_name(gobj));
         wresize(priv->wn, cy, cx);
         wrefresh(priv->wn);
@@ -586,14 +717,6 @@ PRIVATE int ac_size(hgobj gobj, const char *event, json_t *kw, hgobj src)
  ***************************************************************************/
 PRIVATE int ac_top(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
-    if(priv->panel) {
-        top_panel(priv->panel);
-        update_panels(); // TODO is necessary this?
-        doupdate();
-    }
-
     KW_DECREF(kw);
     return 0;
 }
@@ -603,8 +726,10 @@ PRIVATE int ac_top(hgobj gobj, const char *event, json_t *kw, hgobj src)
  *                          FSM
  ***************************************************************************/
 PRIVATE const EVENT input_events[] = {
-    {"EV_KEYCHAR",         0,  0,  0},
+    {"EV_KEYCHAR",          0,  0,  0},
     {"EV_WRITE_TTY",        0,  0,  0},
+    {"EV_SETFOCUS",         0,  0,  0},
+    {"EV_KILLFOCUS",        0,  0,  0},
     {"EV_PAINT",            0,  0,  0},
     {"EV_MOVE",             0,  0,  0},
     {"EV_SIZE",             0,  0,  0},
@@ -630,6 +755,8 @@ PRIVATE const char *state_names[] = {
 PRIVATE EV_ACTION ST_IDLE[] = {
     {"EV_KEYCHAR",          ac_keychar,             0},
     {"EV_WRITE_TTY",        ac_write_tty,           0},
+    {"EV_SETFOCUS",         ac_setfocus,            0},
+    {"EV_KILLFOCUS",        0,                      0},
     {"EV_MOVE",             ac_move,                0},
     {"EV_SIZE",             ac_size,                0},
     {"EV_PAINT",            ac_paint,               0},

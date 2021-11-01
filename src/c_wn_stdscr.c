@@ -44,6 +44,9 @@ PRIVATE struct {
     {COLOR_WHITE,   "white"}
 };
 
+// When SetFocus is rejected (return -1) the focus will be set int __gobj_default_focus__
+PRIVATE hgobj __gobj_default_focus__ = 0;
+
 PRIVATE hgobj __gobj_with_focus__ = 0;
 PRIVATE char __new_stdsrc_size__ = FALSE;
 
@@ -65,10 +68,10 @@ SDATA_END()
  *      GClass trace levels
  *---------------------------------------------*/
 enum {
-    TRACE_USER = 0x0001,
+    TRACE_MESSAGES = 0x0001,
 };
 PRIVATE const trace_level_t s_user_trace_level[16] = {
-{"trace_user",        "Trace user description"},
+{"messages",        "Trace messages"},
 {0, 0},
 };
 
@@ -504,19 +507,40 @@ PUBLIC int _get_curses_color(const char *fg_color, const char *bg_color)
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int SetFocus(hgobj gobj, hgobj *prev_focus_gobj)
+PUBLIC int SetDefaultFocus(hgobj gobj)
+{
+    __gobj_default_focus__ = gobj;
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC int SetFocus(hgobj gobj)
 {
     if(gobj != __gobj_with_focus__) {
+        // Si hay nuevo focus avisa al antiguo
         if(__gobj_with_focus__) {
             gobj_send_event(__gobj_with_focus__, "EV_KILLFOCUS", 0, 0);
+            if(gobj_trace_level(gobj) & (TRACE_MACHINE|TRACE_EV_KW)) {
+                trace_msg("👁 👁 ⏪ %s", gobj_short_name(__gobj_with_focus__));
+            }
+        }
+        __gobj_with_focus__ = gobj;
+        if(gobj_send_event(__gobj_with_focus__, "EV_SETFOCUS", 0, 0)<0) {
+            // Si el nuevo focus no acepta pon el default focus
+            __gobj_with_focus__ = __gobj_default_focus__;
+            gobj_send_event(__gobj_default_focus__, "EV_SETFOCUS", 0, 0);
+            if(gobj_trace_level(gobj) & (TRACE_MACHINE|TRACE_EV_KW)) {
+                trace_msg("👁 👁 ⏩ %s", gobj_short_name(__gobj_with_focus__));
+            }
+        } else {
+            if(gobj_trace_level(gobj) & (TRACE_MACHINE|TRACE_EV_KW)) {
+                trace_msg("👁 👁 ⏩ %s", gobj_short_name(__gobj_with_focus__));
+            }
         }
     }
-    if(prev_focus_gobj) {
-        *prev_focus_gobj = __gobj_with_focus__;
-    }
-    __gobj_with_focus__ = gobj;
-
-    return gobj_send_event(__gobj_with_focus__, "EV_SETFOCUS", 0, 0);
+    return 0;
 }
 
 /***************************************************************************

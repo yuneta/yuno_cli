@@ -604,6 +604,15 @@ PRIVATE int ac_clrscr(hgobj gobj, const char *event, json_t *kw, hgobj src)
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE int ac_setfocus(hgobj gobj, const char *event, json_t *kw, hgobj src)
+{
+    KW_DECREF(kw);
+    return -1;  // Don't want focus
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PRIVATE int ac_move(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
@@ -680,6 +689,8 @@ PRIVATE int ac_top(hgobj gobj, const char *event, json_t *kw, hgobj src)
 PRIVATE const EVENT input_events[] = {
     {"EV_ON_MESSAGE",       0,  0,  0},
     {"EV_SETTEXT",          0,  0,  0},
+    {"EV_KILLFOCUS",        0,  0,  0},
+    {"EV_SETFOCUS",         0,  0,  0},
     {"EV_PAINT",            0,  0,  0},
     {"EV_MOVE",             0,  0,  0},
     {"EV_SIZE",             0,  0,  0},
@@ -707,6 +718,8 @@ PRIVATE const char *state_names[] = {
 PRIVATE EV_ACTION ST_IDLE[] = {
     {"EV_ON_MESSAGE",       ac_on_message,          0},
     {"EV_SETTEXT",          ac_settext,             0},
+    {"EV_SETFOCUS",         ac_setfocus,            0},
+    {"EV_KILLFOCUS",        0,                      0},
     {"EV_MOVE",             ac_move,                0},
     {"EV_SIZE",             ac_size,                0},
     {"EV_PAINT",            ac_paint,               0},

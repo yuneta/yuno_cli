@@ -119,40 +119,40 @@ keytable_t keytable1[] = {
 };
 
 keytable_t keytable2[] = {
-{"editline",    "EV_EDITLINE_MOVE_START",       CTRL_A},
-{"editline",    "EV_EDITLINE_MOVE_START",       MKEY_START},
-{"editline",    "EV_EDITLINE_MOVE_START",       MKEY_START2},
-{"editline",    "EV_EDITLINE_MOVE_END",         CTRL_E},
-{"editline",    "EV_EDITLINE_MOVE_END",         MKEY_END},
-{"editline",    "EV_EDITLINE_MOVE_END",         MKEY_END2},
-{"editline",    "EV_EDITLINE_MOVE_LEFT",        CTRL_B},
-{"editline",    "EV_EDITLINE_MOVE_LEFT",        MKEY_LEFT},
-{"editline",    "EV_EDITLINE_MOVE_LEFT",        MKEY_LEFT2},
-{"editline",    "EV_EDITLINE_MOVE_RIGHT",       CTRL_F},
-{"editline",    "EV_EDITLINE_MOVE_RIGHT",       MKEY_RIGHT},
-{"editline",    "EV_EDITLINE_MOVE_RIGHT",       MKEY_RIGHT2},
-{"editline",    "EV_EDITLINE_DEL_CHAR",         CTRL_D},
-{"editline",    "EV_EDITLINE_DEL_CHAR",         MKEY_DEL},
-{"editline",    "EV_EDITLINE_BACKSPACE",        CTRL_H},
-{"editline",    "EV_EDITLINE_BACKSPACE",        BACKSPACE},
-{"editline",    "EV_EDITLINE_COMPLETE_LINE",    TAB},
-{"editline",    "EV_EDITLINE_ENTER",            ENTER},
-{"editline",    "EV_EDITLINE_PREV_HIST",        MKEY_UP},
-{"editline",    "EV_EDITLINE_PREV_HIST",        MKEY_UP2},
-{"editline",    "EV_EDITLINE_NEXT_HIST",        MKEY_DOWN},
-{"editline",    "EV_EDITLINE_NEXT_HIST",        MKEY_DOWN2},
-{"editline",    "EV_EDITLINE_SWAP_CHAR",        CTRL_T},
-{"editline",    "EV_EDITLINE_DEL_LINE",         CTRL_U},
-{"editline",    "EV_EDITLINE_DEL_LINE",         CTRL_Y},
-{"editline",    "EV_EDITLINE_DEL_PREV_WORD",    CTRL_W},
+{"",    "EV_EDITLINE_MOVE_START",       CTRL_A},
+{"",    "EV_EDITLINE_MOVE_START",       MKEY_START},
+{"",    "EV_EDITLINE_MOVE_START",       MKEY_START2},
+{"",    "EV_EDITLINE_MOVE_END",         CTRL_E},
+{"",    "EV_EDITLINE_MOVE_END",         MKEY_END},
+{"",    "EV_EDITLINE_MOVE_END",         MKEY_END2},
+{"",    "EV_EDITLINE_MOVE_LEFT",        CTRL_B},
+{"",    "EV_EDITLINE_MOVE_LEFT",        MKEY_LEFT},
+{"",    "EV_EDITLINE_MOVE_LEFT",        MKEY_LEFT2},
+{"",    "EV_EDITLINE_MOVE_RIGHT",       CTRL_F},
+{"",    "EV_EDITLINE_MOVE_RIGHT",       MKEY_RIGHT},
+{"",    "EV_EDITLINE_MOVE_RIGHT",       MKEY_RIGHT2},
+{"",    "EV_EDITLINE_DEL_CHAR",         CTRL_D},
+{"",    "EV_EDITLINE_DEL_CHAR",         MKEY_DEL},
+{"",    "EV_EDITLINE_BACKSPACE",        CTRL_H},
+{"",    "EV_EDITLINE_BACKSPACE",        BACKSPACE},
+{"",    "EV_EDITLINE_COMPLETE_LINE",    TAB},
+{"",    "EV_EDITLINE_ENTER",            ENTER},
+{"",    "EV_EDITLINE_PREV_HIST",        MKEY_UP},
+{"",    "EV_EDITLINE_PREV_HIST",        MKEY_UP2},
+{"",    "EV_EDITLINE_NEXT_HIST",        MKEY_DOWN},
+{"",    "EV_EDITLINE_NEXT_HIST",        MKEY_DOWN2},
+{"",    "EV_EDITLINE_SWAP_CHAR",        CTRL_T},
+{"",    "EV_EDITLINE_DEL_LINE",         CTRL_U},
+{"",    "EV_EDITLINE_DEL_LINE",         CTRL_Y},
+{"",    "EV_EDITLINE_DEL_PREV_WORD",    CTRL_W},
 
-{"__top_display_window__",  "EV_CLRSCR",                    CTRL_K},
-{"__top_display_window__",  "EV_SCROLL_PAGE_UP",            MKEY_PREV_PAGE},
-{"__top_display_window__",  "EV_SCROLL_PAGE_DOWN",          MKEY_NEXT_PAGE},
-{"__top_display_window__",  "EV_SCROLL_LINE_UP",            MKEY_ALT_PREV_PAGE},
-{"__top_display_window__",  "EV_SCROLL_LINE_DOWN",          MKEY_ALT_NEXT_PAGE},
-{"__top_display_window__",  "EV_SCROLL_TOP",                MKEY_CTRL_START},
-{"__top_display_window__",  "EV_SCROLL_BOTTOM",             MKEY_CTRL_END},
+{"",    "EV_CLRSCR",                    CTRL_K},
+{"",    "EV_SCROLL_PAGE_UP",            MKEY_PREV_PAGE},
+{"",    "EV_SCROLL_PAGE_DOWN",          MKEY_NEXT_PAGE},
+{"",    "EV_SCROLL_LINE_UP",            MKEY_ALT_PREV_PAGE},
+{"",    "EV_SCROLL_LINE_DOWN",          MKEY_ALT_NEXT_PAGE},
+{"",    "EV_SCROLL_TOP",                MKEY_CTRL_START},
+{"",    "EV_SCROLL_BOTTOM",             MKEY_CTRL_END},
 
 {0}
 };
@@ -426,7 +426,7 @@ PRIVATE int mt_start(hgobj gobj)
     priv->uv_read_active = 1;
     uv_read_start((uv_stream_t*)&priv->uv_tty, on_alloc_cb, on_read_cb);
 
-    SetFocus(priv->gobj_editline, 0);
+    SetDefaultFocus(priv->gobj_editline);
     msg2statusline(gobj, 0, "Wellcome to Yuneta. Type help for assistance.");
 
     /*
@@ -1560,11 +1560,7 @@ PRIVATE int set_top_window(hgobj gobj, const char *name)
         snprintf(prompt, sizeof(prompt), "%s> ", name);
         gobj_write_str_attr(priv->gobj_editline, "prompt", prompt);
 
-        hgobj gobj_prev;
-
-        if(SetFocus(gobj_display, &gobj_prev)<0) {
-            SetFocus(gobj_prev, 0);
-        }
+        SetFocus(gobj_display);
 
     } else {
         log_error(0,
@@ -1786,8 +1782,6 @@ PRIVATE int display_webix_result(
         fflush(priv->file_saving_output);
     }
 
-    SetFocus(priv->gobj_editline, 0);
-
     JSON_DECREF(webix);
     return 0;
 }
@@ -1905,18 +1899,24 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
         return;
     }
     if(nread > 8) {
-        log_error(0,
-            "gobj",         "%s", gobj_full_name(gobj),
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "nread TOO LONG",
-            "nread",        "%d", nread,
-            NULL
-        );
+        // It's must be the mouse cursor
+        char *p = strchr(buf->base+1, 0x1B);
+        if(p) {
+            *p = 0;
+            nread = (int)(p - buf->base);
+            if(gobj_trace_level(gobj) & (TRACE_UV|TRACE_KB)) {
+                log_debug_dump(
+                    0,
+                    buf->base,
+                    nread,
+                    "REDUCE!"
+                );
+            }
+        }
     }
     uint8_t b[8];
     memset(b, 0, sizeof(b));
-    memmove(b, buf->base, MAX(8, nread));
+    memmove(b, buf->base, MIN(8, nread));
 
     do {
         /*
@@ -1939,7 +1939,6 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
                 );
             } else {
                 gobj_send_event(dst_gobj, event, 0, gobj);
-                SetFocus(priv->gobj_editline, 0);
             }
             return;
         }
@@ -1953,10 +1952,10 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
             const char *event = kt->event;
 
             hgobj dst_gobj;
-            if(strcmp(dst, "__top_display_window__")==0) {
-                dst_gobj = __top_display_window__;
-            } else {
+            if(!empty_string(dst)) {
                 dst_gobj = gobj_find_unique_gobj(dst, FALSE);
+            } else {
+                dst_gobj = GetFocus();
             }
             if(!dst_gobj) {
                 log_error(0,
@@ -1973,7 +1972,6 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
                     if(strcmp(event, "EV_EDITLINE_DEL_LINE")==0) {
                         msg2statusline(gobj, 0, "");
                     }
-                    SetFocus(priv->gobj_editline, 0);
                     return;
                 }
             }
@@ -2041,13 +2039,10 @@ PRIVATE void do_close(hgobj gobj)
  ***************************************************************************/
 PRIVATE void new_line(hgobj gobj, hgobj wn_display)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
     json_t *jn_text = json_pack("{s:s}",
         "text", ""
     );
     gobj_send_event(wn_display, "EV_SETTEXT", jn_text, gobj);
-    SetFocus(priv->gobj_editline, 0);
 }
 
 /***************************************************************************
@@ -2560,7 +2555,6 @@ PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
     );
 
     set_top_window(gobj, "console");
-    SetFocus(priv->gobj_editline, 0);
 
     // No puedo parar y destruir con libuv.
     // De momento conexiones indestructibles, destruibles solo con la salida del yuno.
@@ -2696,7 +2690,6 @@ PRIVATE int ac_edit_config(hgobj gobj, const char *event, json_t *kw, hgobj src)
         "text", upgrade_command
     );
     gobj_send_event(priv->gobj_editline, "EV_SETTEXT", jn_text, gobj);
-    SetFocus(priv->gobj_editline, 0);
 
     KW_DECREF(kw);
     return 0;
@@ -3039,8 +3032,6 @@ PRIVATE int ac_tty_mirror_open(hgobj gobj, const char *event, json_t *kw, hgobj 
  ***************************************************************************/
 PRIVATE int ac_tty_mirror_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
 {
-    PRIVATE_DATA *priv = gobj_priv_data(gobj);
-
     if(!gobj_is_running(gobj)) {
         KW_DECREF(kw);
         return 0;
@@ -3067,7 +3058,6 @@ PRIVATE int ac_tty_mirror_close(hgobj gobj, const char *event, json_t *kw, hgobj
     }
 
     set_top_window(gobj, agent_name);
-    SetFocus(priv->gobj_editline, 0);
 
     KW_DECREF(kw);
     return 0;

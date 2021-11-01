@@ -1322,14 +1322,14 @@ PRIVATE EV_ACTION ST_IDLE[] = {
     {"EV_EDITLINE_DEL_LINE",        ac_del_line,        0},
     {"EV_EDITLINE_DEL_PREV_WORD",   ac_del_prev_word,   0},
 
-    {"EV_GETTEXT",          ac_gettext,         0},
-    {"EV_SETTEXT",          ac_settext,         0},
-    {"EV_SETFOCUS",         ac_setfocus,        0},
-    {"EV_KILLFOCUS",        0,                  0},
-    {"EV_MOVE",             ac_move,            0},
-    {"EV_SIZE",             ac_size,            0},
-    {"EV_PAINT",            ac_paint,           0},
-    {"EV_CLEAR_HISTORY",    ac_clear_history,   0},
+    {"EV_GETTEXT",                  ac_gettext,         0},
+    {"EV_SETTEXT",                  ac_settext,         0},
+    {"EV_SETFOCUS",                 ac_setfocus,        0},
+    {"EV_KILLFOCUS",                0,                  0},
+    {"EV_MOVE",                     ac_move,            0},
+    {"EV_SIZE",                     ac_size,            0},
+    {"EV_PAINT",                    ac_paint,           0},
+    {"EV_CLEAR_HISTORY",            ac_clear_history,   0},
     {0,0,0}
 };
 
