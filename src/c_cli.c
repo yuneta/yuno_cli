@@ -1779,7 +1779,7 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
     if(gobj_trace_level(gobj) & TRACE_UV) {
-        trace_msg("<<< on_read_cb %d tcp p=%p",
+        trace_msg("<<< on_read_cb %d tty p=%p",
             nread,
             &priv->uv_tty
         );
@@ -1965,7 +1965,7 @@ PRIVATE void do_close(hgobj gobj)
     }
 
     if(gobj_trace_level(gobj) & TRACE_UV) {
-        trace_msg(">>> uv_close tcp p=%p", &priv->uv_tty);
+        trace_msg(">>> uv_close tty p=%p", &priv->uv_tty);
     }
     uv_close((uv_handle_t *)&priv->uv_tty, on_close_cb);
 }
