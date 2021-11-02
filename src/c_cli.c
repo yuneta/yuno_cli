@@ -116,40 +116,40 @@ keytable_t keytable1[] = {
 };
 
 keytable_t keytable2[] = {
-{"",    "EV_EDITLINE_MOVE_START",       CTRL_A},
-{"",    "EV_EDITLINE_MOVE_START",       MKEY_START},
-{"",    "EV_EDITLINE_MOVE_START",       MKEY_START2},
-{"",    "EV_EDITLINE_MOVE_END",         CTRL_E},
-{"",    "EV_EDITLINE_MOVE_END",         MKEY_END},
-{"",    "EV_EDITLINE_MOVE_END",         MKEY_END2},
-{"",    "EV_EDITLINE_MOVE_LEFT",        CTRL_B},
-{"",    "EV_EDITLINE_MOVE_LEFT",        MKEY_LEFT},
-{"",    "EV_EDITLINE_MOVE_LEFT",        MKEY_LEFT2},
-{"",    "EV_EDITLINE_MOVE_RIGHT",       CTRL_F},
-{"",    "EV_EDITLINE_MOVE_RIGHT",       MKEY_RIGHT},
-{"",    "EV_EDITLINE_MOVE_RIGHT",       MKEY_RIGHT2},
-{"",    "EV_EDITLINE_DEL_CHAR",         CTRL_D},
-{"",    "EV_EDITLINE_DEL_CHAR",         MKEY_DEL},
-{"",    "EV_EDITLINE_BACKSPACE",        CTRL_H},
-{"",    "EV_EDITLINE_BACKSPACE",        BACKSPACE},
-{"",    "EV_EDITLINE_COMPLETE_LINE",    TAB},
-{"",    "EV_EDITLINE_ENTER",            ENTER},
-{"",    "EV_EDITLINE_PREV_HIST",        MKEY_UP},
-{"",    "EV_EDITLINE_PREV_HIST",        MKEY_UP2},
-{"",    "EV_EDITLINE_NEXT_HIST",        MKEY_DOWN},
-{"",    "EV_EDITLINE_NEXT_HIST",        MKEY_DOWN2},
-{"",    "EV_EDITLINE_SWAP_CHAR",        CTRL_T},
-{"",    "EV_EDITLINE_DEL_LINE",         CTRL_U},
-{"",    "EV_EDITLINE_DEL_LINE",         CTRL_Y},
-{"",    "EV_EDITLINE_DEL_PREV_WORD",    CTRL_W},
+{"editline",    "EV_EDITLINE_MOVE_START",       CTRL_A},
+{"editline",    "EV_EDITLINE_MOVE_START",       MKEY_START},
+{"editline",    "EV_EDITLINE_MOVE_START",       MKEY_START2},
+{"editline",    "EV_EDITLINE_MOVE_END",         CTRL_E},
+{"editline",    "EV_EDITLINE_MOVE_END",         MKEY_END},
+{"editline",    "EV_EDITLINE_MOVE_END",         MKEY_END2},
+{"editline",    "EV_EDITLINE_MOVE_LEFT",        CTRL_B},
+{"editline",    "EV_EDITLINE_MOVE_LEFT",        MKEY_LEFT},
+{"editline",    "EV_EDITLINE_MOVE_LEFT",        MKEY_LEFT2},
+{"editline",    "EV_EDITLINE_MOVE_RIGHT",       CTRL_F},
+{"editline",    "EV_EDITLINE_MOVE_RIGHT",       MKEY_RIGHT},
+{"editline",    "EV_EDITLINE_MOVE_RIGHT",       MKEY_RIGHT2},
+{"editline",    "EV_EDITLINE_DEL_CHAR",         CTRL_D},
+{"editline",    "EV_EDITLINE_DEL_CHAR",         MKEY_DEL},
+{"editline",    "EV_EDITLINE_BACKSPACE",        CTRL_H},
+{"editline",    "EV_EDITLINE_BACKSPACE",        BACKSPACE},
+{"editline",    "EV_EDITLINE_COMPLETE_LINE",    TAB},
+{"editline",    "EV_EDITLINE_ENTER",            ENTER},
+{"editline",    "EV_EDITLINE_PREV_HIST",        MKEY_UP},
+{"editline",    "EV_EDITLINE_PREV_HIST",        MKEY_UP2},
+{"editline",    "EV_EDITLINE_NEXT_HIST",        MKEY_DOWN},
+{"editline",    "EV_EDITLINE_NEXT_HIST",        MKEY_DOWN2},
+{"editline",    "EV_EDITLINE_SWAP_CHAR",        CTRL_T},
+{"editline",    "EV_EDITLINE_DEL_LINE",         CTRL_U},
+{"editline",    "EV_EDITLINE_DEL_LINE",         CTRL_Y},
+{"editline",    "EV_EDITLINE_DEL_PREV_WORD",    CTRL_W},
 
-{"",    "EV_CLRSCR",                    CTRL_K},
-{"",    "EV_SCROLL_PAGE_UP",            MKEY_PREV_PAGE},
-{"",    "EV_SCROLL_PAGE_DOWN",          MKEY_NEXT_PAGE},
-{"",    "EV_SCROLL_LINE_UP",            MKEY_ALT_PREV_PAGE},
-{"",    "EV_SCROLL_LINE_DOWN",          MKEY_ALT_NEXT_PAGE},
-{"",    "EV_SCROLL_TOP",                MKEY_CTRL_START},
-{"",    "EV_SCROLL_BOTTOM",             MKEY_CTRL_END},
+{"__top_display_window__",    "EV_CLRSCR",                    CTRL_K},
+{"__top_display_window__",    "EV_SCROLL_PAGE_UP",            MKEY_PREV_PAGE},
+{"__top_display_window__",    "EV_SCROLL_PAGE_DOWN",          MKEY_NEXT_PAGE},
+{"__top_display_window__",    "EV_SCROLL_LINE_UP",            MKEY_ALT_PREV_PAGE},
+{"__top_display_window__",    "EV_SCROLL_LINE_DOWN",          MKEY_ALT_NEXT_PAGE},
+{"__top_display_window__",    "EV_SCROLL_TOP",                MKEY_CTRL_START},
+{"__top_display_window__",    "EV_SCROLL_BOTTOM",             MKEY_CTRL_END},
 
 {0}
 };
@@ -1889,7 +1889,11 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
 
             hgobj dst_gobj;
             if(!empty_string(dst)) {
-                dst_gobj = gobj_find_unique_gobj(dst, FALSE);
+                if(strcmp(dst, "__top_display_window__")==0) {
+                    dst_gobj = __top_display_window__;
+                } else {
+                    dst_gobj = gobj_find_unique_gobj(dst, FALSE);
+                }
             } else {
                 dst_gobj = GetFocus();
             }
