@@ -676,6 +676,8 @@ PRIVATE int ac_top(hgobj gobj, const char *event, json_t *kw, hgobj src)
         top_panel(priv->panel);
         update_panels(); // TODO is necessary this?
         doupdate();
+    } else if(priv->wn) {
+        wrefresh(priv->wn);
     }
 
     KW_DECREF(kw);

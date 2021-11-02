@@ -69,6 +69,12 @@
 #define MKEY_ALT_RIGHT          {0x1B, 0x5B, 0x31, 0x3B, 0x33, 0x43} // .[1;3C
 #define MKEY_CTRL_RIGHT         {0x1B, 0x5B, 0x31, 0x3B, 0x35, 0x43} // .[1;5C
 
+#define MKEY_ALT_UP             {0x1B, 0x5B, 0x31, 0x3B, 0x33, 0x41} // .[1;3A
+#define MKEY_CTRL_UP            {0x1B, 0x5B, 0x31, 0x3B, 0x35, 0x41} // .[1;5A
+#define MKEY_ALT_DOWN           {0x1B, 0x5B, 0x31, 0x3B, 0x33, 0x42} // .[1;3B
+#define MKEY_CTRL_DOWN          {0x1B, 0x5B, 0x31, 0x3B, 0x35, 0x42} // .[1;5B
+
+
 /***************************************************************************
  *              Structures
  ***************************************************************************/
@@ -136,8 +142,14 @@ keytable_t keytable2[] = {
 {"editline",    "EV_EDITLINE_ENTER",            ENTER},
 {"editline",    "EV_EDITLINE_PREV_HIST",        MKEY_UP},
 {"editline",    "EV_EDITLINE_PREV_HIST",        MKEY_UP2},
+{"editline",    "EV_EDITLINE_PREV_HIST",        MKEY_ALT_UP},
+{"editline",    "EV_EDITLINE_PREV_HIST",        MKEY_CTRL_UP},
+
 {"editline",    "EV_EDITLINE_NEXT_HIST",        MKEY_DOWN},
 {"editline",    "EV_EDITLINE_NEXT_HIST",        MKEY_DOWN2},
+{"editline",    "EV_EDITLINE_NEXT_HIST",        MKEY_ALT_DOWN},
+{"editline",    "EV_EDITLINE_NEXT_HIST",        MKEY_CTRL_DOWN},
+
 {"editline",    "EV_EDITLINE_SWAP_CHAR",        CTRL_T},
 {"editline",    "EV_EDITLINE_DEL_LINE",         CTRL_U},
 {"editline",    "EV_EDITLINE_DEL_LINE",         CTRL_Y},
@@ -1912,9 +1924,9 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
                     if(strcmp(event, "EV_EDITLINE_DEL_LINE")==0) {
                         msg2statusline(gobj, 0, "");
                     }
-                    return;
                 }
             }
+            return;
         }
 
         /*
