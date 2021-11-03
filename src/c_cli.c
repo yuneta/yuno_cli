@@ -1932,13 +1932,16 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
         /*
          *  Level 3, chars to window with focus
          */
-        GBUFFER *gbuf = gbuf_create(nread, nread, 0, 0);
-        gbuf_append(gbuf, buf->base, nread);
+        if(buf->base[0] >= 0x20 && buf->base[0] <= 0x7f) {
+            // No pases escapes ni utf8
+            GBUFFER *gbuf = gbuf_create(nread, nread, 0, 0);
+            gbuf_append(gbuf, buf->base, nread);
 
-        json_t *kw_keychar = json_pack("{s:I}",
-            "gbuffer", (json_int_t)(size_t)gbuf
-        );
-        gobj_send_event(GetFocus(), "EV_KEYCHAR", kw_keychar, gobj);
+            json_t *kw_keychar = json_pack("{s:I}",
+                "gbuffer", (json_int_t)(size_t)gbuf
+            );
+            gobj_send_event(GetFocus(), "EV_KEYCHAR", kw_keychar, gobj);
+        }
 
     } while(0);
 }

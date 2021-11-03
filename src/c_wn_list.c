@@ -285,6 +285,7 @@ PRIVATE int add_line(hgobj gobj, const char *s, const char *bg_color, const char
 
     line_t *line = gbmem_malloc(sizeof(line_t));
     line->text = gbmem_strdup(s);
+
     line->bg_color = !empty_string(bg_color)?gbmem_strdup(bg_color):0;
     line->fg_color = !empty_string(fg_color)?gbmem_strdup(fg_color):0;
     return dl_add(&priv->dl_lines, line);
