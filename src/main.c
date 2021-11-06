@@ -16,7 +16,7 @@
 #define APP_NAME        "yuneta"
 #define APP_DOC         "Yuneta Command Line Interface"
 
-#define APP_VERSION     "4.22.1"
+#define APP_VERSION     "5.0.0"
 #define APP_DATETIME    __DATE__ " " __TIME__
 #define APP_SUPPORT     "<niyamaka at yuneta.io>"
 
@@ -148,15 +148,13 @@ int main(int argc, char *argv[])
             argc = 1;
         } else if(strcmp(argv[1], "verbose3")==0) {
             gobj_set_gobj_trace(0, "machine", TRUE, 0);
-            gobj_set_gobj_trace(0, "ev_kw", TRUE, 0);
-            gobj_set_gobj_trace(0, "libuv", TRUE, 0);
-            gobj_set_gobj_trace(0, "machine", TRUE, 0);
-            gobj_set_gclass_trace(GCLASS_IEVENT_CLI, "ievents2", TRUE);
-            gobj_set_gobj_trace(0, "ev_kw", TRUE, 0);
-            gobj_set_gobj_trace(0, "subscriptions", TRUE, 0);
             gobj_set_gobj_trace(0, "create_delete", TRUE, 0);
             gobj_set_gobj_trace(0, "create_delete2", TRUE, 0);
+            gobj_set_gobj_trace(0, "subscriptions", TRUE, 0);
             gobj_set_gobj_trace(0, "start_stop", TRUE, 0);
+            gobj_set_gobj_trace(0, "libuv", TRUE, 0);
+            gobj_set_gobj_trace(0, "ev_kw", TRUE, 0);
+            gobj_set_gclass_trace(GCLASS_IEVENT_CLI, "ievents2", TRUE);
             gobj_set_gclass_trace(GCLASS_CLI, "trace-kb", TRUE);
             argc = 1;
         } else if(strcmp(argv[1], "verbose")==0) {
