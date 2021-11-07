@@ -656,7 +656,7 @@ PRIVATE json_t *cmd_connect(hgobj gobj, const char *command, json_t *kw, hgobj s
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("Connecting to %s...", url),
+        json_sprintf("Connecting to %s...", url),
         0,
         0,
         kw
@@ -677,9 +677,9 @@ PRIVATE json_t *cmd_disconnect(hgobj gobj, const char *command, json_t *kw)
     );
     json_t *jn_resp;
     if(gobj_send_event(gobj_router, "EV_DEL_STATIC_ROUTE", kw_route, gobj)<0) {
-         jn_resp = json_local_sprintf("Agent '%s' NOT FOUND.", agent);
+         jn_resp = json_sprintf("Agent '%s' NOT FOUND.", agent);
     } else {
-         jn_resp = json_local_sprintf("Disconnecting from %s...", agent);
+         jn_resp = json_sprintf("Disconnecting from %s...", agent);
     }
 
     KW_DECREF(kw);
@@ -739,7 +739,7 @@ PRIVATE json_t *cmd_open_log(hgobj gobj, const char *command, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Log server at %s already opened.", url),
+            json_sprintf("Log server at %s already opened.", url),
             0,
             0,
             kw
@@ -756,7 +756,7 @@ PRIVATE json_t *cmd_open_log(hgobj gobj, const char *command, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Log server at %s failed to open.", url),
+            json_sprintf("Log server at %s failed to open.", url),
             0,
             0,
             kw
@@ -775,7 +775,7 @@ PRIVATE json_t *cmd_open_log(hgobj gobj, const char *command, json_t *kw, hgobj 
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("Log server at %s.", url),
+        json_sprintf("Log server at %s.", url),
         0,
         0,
         kw
@@ -809,7 +809,7 @@ PRIVATE json_t *cmd_quit(hgobj gobj, const char *command, json_t *kw, hgobj src)
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("Exiting..."),
+        json_sprintf("Exiting..."),
         0,
         0,
         kw
@@ -835,7 +835,7 @@ PRIVATE json_t *cmd_display_mode(hgobj gobj, const char *command, json_t *kw, hg
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("Mode '%s'.", display_mode),
+        json_sprintf("Mode '%s'.", display_mode),
         0,
         0,
         kw
@@ -858,7 +858,7 @@ PRIVATE json_t *cmd_editor(hgobj gobj, const char *command, json_t *kw, hgobj sr
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("Editor '%s'.", editor),
+        json_sprintf("Editor '%s'.", editor),
         0,
         0,
         kw
@@ -877,7 +877,7 @@ PRIVATE json_t *cmd_refresh(hgobj gobj, const char *command, json_t *kw, hgobj s
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("Done!"),
+        json_sprintf("Done!"),
         0,
         0,
         kw
@@ -901,7 +901,7 @@ PRIVATE json_t* cmd_open_output(hgobj gobj, const char* cmd, json_t* kw, hgobj s
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What file?"),
+            json_sprintf("What file?"),
             0,
             0,
             kw
@@ -911,7 +911,7 @@ PRIVATE json_t* cmd_open_output(hgobj gobj, const char* cmd, json_t* kw, hgobj s
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("Done!"),
+        json_sprintf("Done!"),
         0,
         0,
         kw
@@ -933,7 +933,7 @@ PRIVATE json_t* cmd_close_output(hgobj gobj, const char* cmd, json_t* kw, hgobj 
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("Done!"),
+        json_sprintf("Done!"),
         0,
         0,
         kw
@@ -950,7 +950,7 @@ PRIVATE json_t *cmd_add_shortkey(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Shortkeys dict NULL"),
+            json_sprintf("Shortkeys dict NULL"),
             0,
             0,
             kw
@@ -963,7 +963,7 @@ PRIVATE json_t *cmd_add_shortkey(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What key?"),
+            json_sprintf("What key?"),
             0,
             0,
             kw
@@ -973,7 +973,7 @@ PRIVATE json_t *cmd_add_shortkey(hgobj gobj, const char *cmd, json_t *kw, hgobj 
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What command?"),
+            json_sprintf("What command?"),
             0,
             0,
             kw
@@ -986,7 +986,7 @@ PRIVATE json_t *cmd_add_shortkey(hgobj gobj, const char *cmd, json_t *kw, hgobj 
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("Done! \"%s\": \"%s\"", key, command),
+        json_sprintf("Done! \"%s\": \"%s\"", key, command),
         0,
         0,
         kw
@@ -1003,7 +1003,7 @@ PRIVATE json_t *cmd_remove_shortkey(hgobj gobj, const char *cmd, json_t *kw, hgo
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Shortkeys dict NULL"),
+            json_sprintf("Shortkeys dict NULL"),
             0,
             0,
             kw
@@ -1015,7 +1015,7 @@ PRIVATE json_t *cmd_remove_shortkey(hgobj gobj, const char *cmd, json_t *kw, hgo
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What key?"),
+            json_sprintf("What key?"),
             0,
             0,
             kw
@@ -1026,7 +1026,7 @@ PRIVATE json_t *cmd_remove_shortkey(hgobj gobj, const char *cmd, json_t *kw, hgo
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Key '%s' not found.", key),
+            json_sprintf("Key '%s' not found.", key),
             0,
             0,
             kw
@@ -1039,7 +1039,7 @@ PRIVATE json_t *cmd_remove_shortkey(hgobj gobj, const char *cmd, json_t *kw, hgo
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("Done!"),
+        json_sprintf("Done!"),
         0,
         0,
         kw
@@ -1056,7 +1056,7 @@ PRIVATE json_t *cmd_list_shortkey(hgobj gobj, const char *cmd, json_t *kw, hgobj
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("Shortkeys dict NULL"),
+            json_sprintf("Shortkeys dict NULL"),
             0,
             0,
             kw
@@ -1117,7 +1117,7 @@ PRIVATE json_t *cmd_clear_history(hgobj gobj, const char *cmd, json_t *kw, hgobj
     return msg_iev_build_webix(
         gobj,
         0,
-        json_local_sprintf("History cleared.\n"),
+        json_sprintf("History cleared.\n"),
         0,
         0,
         kw
@@ -1143,7 +1143,7 @@ PRIVATE json_t *cmd_do_authenticate_task(hgobj gobj, const char *cmd, json_t *kw
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What auth_url? (OAuth2 Server Url)"),
+            json_sprintf("What auth_url? (OAuth2 Server Url)"),
             0,
             0,
             kw
@@ -1153,7 +1153,7 @@ PRIVATE json_t *cmd_do_authenticate_task(hgobj gobj, const char *cmd, json_t *kw
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What auth_owner? (OAuth2 Owner)"),
+            json_sprintf("What auth_owner? (OAuth2 Owner)"),
             0,
             0,
             kw
@@ -1163,7 +1163,7 @@ PRIVATE json_t *cmd_do_authenticate_task(hgobj gobj, const char *cmd, json_t *kw
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What realm_role? ('azp' Oauth2 Authorized Party, client_id in keycloak)"),
+            json_sprintf("What realm_role? ('azp' Oauth2 Authorized Party, client_id in keycloak)"),
             0,
             0,
             kw
@@ -1173,7 +1173,7 @@ PRIVATE json_t *cmd_do_authenticate_task(hgobj gobj, const char *cmd, json_t *kw
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What user_id? (OAuth2 User Id)"),
+            json_sprintf("What user_id? (OAuth2 User Id)"),
             0,
             0,
             kw
@@ -1183,7 +1183,7 @@ PRIVATE json_t *cmd_do_authenticate_task(hgobj gobj, const char *cmd, json_t *kw
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_local_sprintf("What user_passw? (OAuth2 User Password)"),
+            json_sprintf("What user_passw? (OAuth2 User Password)"),
             0,
             0,
             kw
@@ -1635,7 +1635,7 @@ PRIVATE int display_webix_result(
     }
 
     if(result < 0) {
-        json_t *jn_error = json_local_sprintf("ERROR %d: %s", result, comment);
+        json_t *jn_error = json_sprintf("ERROR %d: %s", result, comment);
         json_t *jn_text = json_pack("{s:o, s:s}",
             "text", jn_error,
             "bg_color", "red"
@@ -1792,7 +1792,7 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
 
     if(gobj_trace_level(gobj) & TRACE_UV) {
         trace_msg("<<< on_read_cb %d tty p=%p",
-            nread,
+            (int)nread,
             &priv->uv_tty
         );
     }
@@ -1838,7 +1838,7 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
             0,
             buf->base,
             nread,
-            ""
+            "on_read_cb"
         );
     }
 
@@ -2248,7 +2248,7 @@ PRIVATE int ac_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
                 msg_iev_build_webix(
                     gobj,
                     0,
-                    json_local_sprintf("\n"),
+                    json_sprintf("\n"),
                     0,
                     0,
                     0
@@ -2265,7 +2265,7 @@ PRIVATE int ac_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
             msg_iev_build_webix(
                 gobj,
                 0,
-                json_local_sprintf("> %s", command),
+                json_sprintf("> %s", command),
                 0,
                 0,
                 0
@@ -2281,7 +2281,7 @@ PRIVATE int ac_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
                 msg_iev_build_webix(
                     gobj,
                     -1,
-                    json_local_sprintf(comment),
+                    json_sprintf("%s", comment),
                     0,
                     0,
                     0
@@ -2312,7 +2312,7 @@ PRIVATE int ac_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
             webix = msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Window without connection"),
+                json_sprintf("Window without connection"),
                 0,
                 0,
                 0
@@ -2453,7 +2453,7 @@ PRIVATE int ac_on_open(hgobj gobj, const char *event, json_t *kw, hgobj src)
         msg_iev_build_webix(
             gobj,
             0,
-            json_local_sprintf("Connected to '%s'.\n\n", agent_name),
+            json_sprintf("Connected to '%s'.\n\n", agent_name),
             0,
             0,
             0
@@ -2491,7 +2491,7 @@ PRIVATE int ac_on_close(hgobj gobj, const char *event, json_t *kw, hgobj src)
         msg_iev_build_webix(
             gobj,
             0,
-            json_local_sprintf("Disconnected from '%s'.\n\n", agent_name),
+            json_sprintf("Disconnected from '%s'.\n\n", agent_name),
             0,
             0,
             0
@@ -2556,7 +2556,7 @@ PRIVATE int ac_edit_config(hgobj gobj, const char *event, json_t *kw, hgobj src)
             msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Internal error, no data"),
+                json_sprintf("Internal error, no data"),
                 0,
                 0,
                 kw  // owned
@@ -2572,7 +2572,7 @@ PRIVATE int ac_edit_config(hgobj gobj, const char *event, json_t *kw, hgobj src)
             msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Internal error, no id"),
+                json_sprintf("Internal error, no id"),
                 0,
                 0,
                 kw  // owned
@@ -2588,7 +2588,7 @@ PRIVATE int ac_edit_config(hgobj gobj, const char *event, json_t *kw, hgobj src)
             msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Internal error, no content"),
+                json_sprintf("Internal error, no content"),
                 0,
                 0,
                 kw  // owned
@@ -2612,7 +2612,7 @@ PRIVATE int ac_edit_config(hgobj gobj, const char *event, json_t *kw, hgobj src)
             msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Bad json format in '%s' source. Line %d, Column %d, Error '%s'",
+                json_sprintf("Bad json format in '%s' source. Line %d, Column %d, Error '%s'",
                     path,
                     error.line,
                     error.column,
@@ -2665,7 +2665,7 @@ PRIVATE int ac_view_config(hgobj gobj, const char *event, json_t *kw, hgobj src)
             msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Internal error, no data"),
+                json_sprintf("Internal error, no data"),
                 0,
                 0,
                 kw  // owned
@@ -2682,7 +2682,7 @@ PRIVATE int ac_view_config(hgobj gobj, const char *event, json_t *kw, hgobj src)
             msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Internal error, no zcontent"),
+                json_sprintf("Internal error, no zcontent"),
                 0,
                 record,
                 kw  // owned
@@ -2727,7 +2727,7 @@ PRIVATE int ac_read_json(hgobj gobj, const char *event, json_t *kw, hgobj src)
             msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Internal error, no data"),
+                json_sprintf("Internal error, no data"),
                 0,
                 0,
                 kw  // owned
@@ -2743,7 +2743,7 @@ PRIVATE int ac_read_json(hgobj gobj, const char *event, json_t *kw, hgobj src)
             msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Internal error, no content"),
+                json_sprintf("Internal error, no content"),
                 0,
                 0,
                 kw  // owned
@@ -2788,7 +2788,7 @@ PRIVATE int ac_read_file(hgobj gobj, const char *event, json_t *kw, hgobj src)
             msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Internal error, no data"),
+                json_sprintf("Internal error, no data"),
                 0,
                 0,
                 kw  // owned
@@ -2804,7 +2804,7 @@ PRIVATE int ac_read_file(hgobj gobj, const char *event, json_t *kw, hgobj src)
             msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Internal error, no content"),
+                json_sprintf("Internal error, no content"),
                 0,
                 0,
                 kw  // owned
@@ -2849,7 +2849,7 @@ PRIVATE int ac_read_binary_file(hgobj gobj, const char *event, json_t *kw, hgobj
             msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Internal error, no data"),
+                json_sprintf("Internal error, no data"),
                 0,
                 0,
                 kw  // owned
@@ -2865,7 +2865,7 @@ PRIVATE int ac_read_binary_file(hgobj gobj, const char *event, json_t *kw, hgobj
             msg_iev_build_webix(
                 gobj,
                 -1,
-                json_local_sprintf("Internal error, no content64"),
+                json_sprintf("Internal error, no content64"),
                 0,
                 0,
                 kw  // owned
