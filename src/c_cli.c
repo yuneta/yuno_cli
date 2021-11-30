@@ -2093,7 +2093,7 @@ PRIVATE int edit_json(hgobj gobj, const char *path)
 
     savetty();
     def_prog_mode();
-    int ret = system(command);
+    int ret = pty_sync_spawn(command);
     resetty();
     reset_prog_mode();
     doupdate();
