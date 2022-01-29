@@ -95,7 +95,8 @@ PRIVATE int destroy_display_window(hgobj gobj, const char *name);
 PRIVATE hgobj create_static(hgobj gobj, const char* name, json_t* kw_static);
 PRIVATE int destroy_static(hgobj gobj, const char *name);
 PRIVATE int set_top_window(hgobj gobj, const char *name);
-PRIVATE int msg2statusline(hgobj gobj, BOOL error, const char *fmt, ...);
+PUBLIC int msg2display(hgobj gobj, const char *fmt, ...) JANSSON_ATTRS((format(printf, 2, 3)));
+PRIVATE int msg2statusline(hgobj gobj, BOOL error, const char *fmt, ...) JANSSON_ATTRS((format(printf, 3, 4)));
 PRIVATE char *get_primary_ip(hgobj gobj, char *bf, int bfsize);
 PRIVATE int ac_agent_response(hgobj gobj, const char *event, json_t *kw, hgobj src);
 PRIVATE char *get_history_file(char *bf, int bfsize);
@@ -1656,7 +1657,7 @@ PRIVATE int display_webix_result(
                 fprintf(priv->file_saving_output, "%s\n", comment);
             }
         }
-        msg2statusline(gobj, 0, "");
+        msg2statusline(gobj, 0, "%s", "");
     }
 
     if(json_is_array(jn_data)) {
@@ -1731,6 +1732,29 @@ PRIVATE int display_webix_result(
     }
 
     JSON_DECREF(webix);
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC int msg2display(hgobj gobj, const char *fmt, ...)
+{
+    va_list ap;
+    char temp[4*1024];
+
+
+    va_start(ap, fmt);
+    vsnprintf(temp, sizeof(temp), fmt, ap);
+
+    json_t *jn_text = json_pack("{s:s}",
+        "text", temp
+    );
+    hgobj wn_display = get_top_display_window(gobj);
+    gobj_send_event(wn_display, "EV_SETTEXT", jn_text, gobj);
+
+    va_end(ap);
+
     return 0;
 }
 
@@ -1922,7 +1946,7 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
                 if(gobj_event_in_input_event_list(dst_gobj, event, 0)) {
                     gobj_send_event(dst_gobj, event, 0, gobj);
                     if(strcmp(event, "EV_EDITLINE_DEL_LINE")==0) {
-                        msg2statusline(gobj, 0, "");
+                        msg2statusline(gobj, 0, "%s", "");
                     }
                 }
             }
@@ -2196,9 +2220,9 @@ PRIVATE GBUFFER * replace_cli_vars(hgobj gobj, const char *command, char **comme
 
 /***************************************************************************
  *  Busca el shortkey 'key, y si existe ponlo en bf.
- *  Retorna bf si hay shortkey, o key sino.
+ *  Retorna bf si hay shortkey, o null sino.
  ***************************************************************************/
-const char *filter_by_shortkeys(hgobj gobj, char *bf, int bfsize, const char *key)
+PRIVATE BOOL filter_by_shortkeys(hgobj gobj, char *bf, int bfsize, const char *key)
 {
     PRIVATE_DATA *priv = gobj_priv_data(gobj);
 
@@ -2206,10 +2230,10 @@ const char *filter_by_shortkeys(hgobj gobj, char *bf, int bfsize, const char *ke
     if(jn_command) {
         const char *command = json_string_value(jn_command);
         snprintf(bf, bfsize, "%s", command);
-        return bf;
+        return TRUE;
     }
 
-    return key;
+    return FALSE;
 }
 
 
@@ -2233,8 +2257,28 @@ PRIVATE int ac_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
     gobj_send_event(src, "EV_GETTEXT", kw_input_command, gobj); // EV_GETTEXT is EVF_KW_WRITING
     const char *command = kw_get_str(kw_input_command, "text", 0, 0);
 
-    char command_[1024];
-    command = filter_by_shortkeys(gobj, command_, sizeof(command_), command);
+    char params_[4*1024];
+    snprintf(params_, sizeof(params_), "%s", command);
+    char *save_ptr = 0;
+    char *key = get_parameter(params_, &save_ptr);
+
+    char command_[4*1024];
+    if(filter_by_shortkeys(gobj, command_, sizeof(command_), key)) {
+        char *dolar_content = save_ptr;
+        int i = 1;
+        while((dolar_content = get_parameter(dolar_content, &save_ptr))) {
+            char dolar_n[32];
+            snprintf(dolar_n, sizeof(dolar_n), "$%d", i);
+            char *rs = replace_string(command_, dolar_n, dolar_content);
+            snprintf(command_, sizeof(command_), "%s", rs);
+            free(rs);
+
+            dolar_content = save_ptr;
+            i++;
+        }
+
+        command = command_;
+    }
 
     /*
      *  Select the destination of command: what output window is active?
@@ -2698,7 +2742,7 @@ PRIVATE int ac_view_config(hgobj gobj, const char *event, json_t *kw, hgobj src)
     edit_json(gobj, path);
 
     new_line(gobj, wn_display);
-    msg2statusline(gobj, 0, "");
+    msg2statusline(gobj, 0, "%s", "");
 
     KW_DECREF(kw);
     return 0;
@@ -2759,7 +2803,7 @@ PRIVATE int ac_read_json(hgobj gobj, const char *event, json_t *kw, hgobj src)
     edit_json(gobj, path);
 
     new_line(gobj, wn_display);
-    msg2statusline(gobj, 0, "");
+    msg2statusline(gobj, 0, "%s", "");
 
     KW_DECREF(kw);
     return 0;
@@ -2820,7 +2864,7 @@ PRIVATE int ac_read_file(hgobj gobj, const char *event, json_t *kw, hgobj src)
     edit_json(gobj, path);
 
     new_line(gobj, wn_display);
-    msg2statusline(gobj, 0, "");
+    msg2statusline(gobj, 0, "%s", "");
 
     KW_DECREF(kw);
     return 0;
@@ -2909,12 +2953,12 @@ PRIVATE int ac_on_token(hgobj gobj, const char *event, json_t *kw, hgobj src)
     const char *comment = kw_get_str(kw, "comment", "", 0);
     int result = kw_get_int(kw, "result", -1, KW_REQUIRED);
     if(result < 0) {
-        msg2statusline(gobj, TRUE, comment);
+        msg2statusline(gobj, TRUE, "%s", comment);
 
     } else {
         const char *jwt = kw_get_str(kw, "jwt", "", KW_REQUIRED);
         gobj_write_str_attr(gobj, "jwt", jwt);
-        msg2statusline(gobj, FALSE, comment);
+        msg2statusline(gobj, FALSE, "%s", comment);
     }
 
     gobj_stop(src);
