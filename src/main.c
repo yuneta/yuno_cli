@@ -76,7 +76,7 @@ PRIVATE char variable_config[]= "\
             'ss': 'command-yuno yuno_role=logcenter command=display-summary',   \n\
             'r': 'command-yuno yuno_role=logcenter command=reset-counters',     \n\
             'tt': 't yuno_running=1',                                           \n\
-            'control': 'c url=wss://127.0.0.1:1911 yuno_role=controlcenter service=controlcenter' \n\
+            'error': 'command-yuno yuno_role=logcenter command=search text=\\\"$1\\\"' \n\
         }                                                                       \n\
     },                                                              \n\
     'services': [                                                   \n\
