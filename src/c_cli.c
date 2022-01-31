@@ -299,6 +299,17 @@ SDATACM (ASN_OCTET_STR, "",                 0,                  0,          0,  
 SDATA_END()
 };
 
+PRIVATE sdata_desc_t pm_generic_command[] = {
+/*-PM----type-----------name------------flag------------default-----description---------- */
+SDATAPM (ASN_OCTET_STR, "id",           0,              0,          "Id"),
+SDATA_END()
+};
+
+PRIVATE sdata_desc_t generic_command_attr_desc[] = {
+/*-CMD2--type-----------name--------flag----------------alias-------items---------------json_fn-----description---------- */
+SDATACM2 (ASN_SCHEMA,   "xxx",      SDF_WILD_CMD,       0,          pm_generic_command, 0,          "Generic command"),
+SDATA_END()
+};
 
 /*---------------------------------------------*
  *      Attributes - order affect to oid's
@@ -2262,6 +2273,9 @@ PRIVATE int ac_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
     char *save_ptr = 0;
     char *key = get_parameter(params_, &save_ptr);
 
+    /*
+     *  Using variables $1 $2 .. like bash, only for shortkeys
+     */
     char command_[4*1024];
     if(filter_by_shortkeys(gobj, command_, sizeof(command_), key)) {
         char *dolar_content = save_ptr;
@@ -2279,6 +2293,16 @@ PRIVATE int ac_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
 
         command = command_;
     }
+
+    /*
+     *  Get 'id' field to use in cli_vars
+     */
+    char id[NAME_MAX] = {0};
+    int result;
+    json_t *kw_cmd = build_cmd_kw("", "", &generic_command_attr_desc[0], save_ptr, kw, &result);
+    const char *id_ = kw_get_str(kw_cmd, "id", "", 0);
+    snprintf(id, sizeof(id), "%s", id_);
+    json_decref(kw_cmd);
 
     /*
      *  Select the destination of command: what output window is active?
