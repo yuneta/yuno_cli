@@ -2163,15 +2163,21 @@ PRIVATE GBUFFER *source2base64(const char *source, char **comment)
 }
 
 /***************************************************************************
- *
+ *  $$ interfere with bash, use ^^ as alternative
  ***************************************************************************/
 PRIVATE GBUFFER * replace_cli_vars(hgobj gobj, const char *command, char **comment)
 {
     GBUFFER *gbuf = gbuf_create(4*1024, gbmem_get_maximum_block(), 0, 0);
     char *command_ = gbmem_strdup(command);
     char *p = command_;
+
+    const char *prefix = "$$";  // default
+    if(strstr(p, "^^")) {
+        prefix = "^^";
+    }
+
     char *n, *f;
-    while((n=strstr(p, "$$"))) {
+    while((n=strstr(p, prefix))) {
         *n = 0;
         gbuf_append(gbuf, p, strlen(p));
 
@@ -2181,13 +2187,13 @@ PRIVATE GBUFFER * replace_cli_vars(hgobj gobj, const char *command, char **comme
         } else {
             gbuf_decref(gbuf);
             gbmem_free(command_);
-            *comment = "Bad format of $$: use $$(..)";
+            *comment = "Bad format of $$: use $$(...) or ^^(...)";
             return 0;
         }
         if(!f) {
             gbuf_decref(gbuf);
             gbmem_free(command_);
-            *comment = "Bad format of $$: use $$(...)";
+            *comment = "Bad format of $$: use $$(...) or ^^(...)";
             return 0;
         }
         *n = 0;
