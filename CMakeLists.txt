@@ -125,8 +125,9 @@ else(NOT CYGWIN)
         libncurses.a
         /yuneta/development/output/lib/libssl.a
         /yuneta/development/output/lib/libcrypto.a
+        /yuneta/development/output/lib/libargp.a
 
-        intl argp
+        intl
         pthread dl  # used by libuv
         lzma        # used by libunwind
         rt m
