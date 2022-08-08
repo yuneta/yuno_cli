@@ -232,7 +232,7 @@ PRIVATE int mt_child_added(hgobj gobj, hgobj child)
  ***************************************************************************/
 PRIVATE int mt_child_removed(hgobj gobj, hgobj child)
 {
-    if(gobj_is_running(gobj)) {
+    if(!gobj_is_destroying(gobj) && gobj_is_running(gobj)) {
         fix_child_sizes(gobj);
         gobj_send_event(gobj, "EV_PAINT", 0, gobj); // repaint myself: in resize of childs the remain zones are not refreshed
     }
