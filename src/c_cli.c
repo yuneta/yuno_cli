@@ -1647,15 +1647,6 @@ PRIVATE int display_webix_result(
             fprintf(priv->file_saving_output, "ERROR %d: %s\n", result, comment);
         }
     } else {
-        if(!empty_string(comment)) {
-            json_t *jn_text = json_pack("{s:s}",
-                "text", comment
-            );
-            gobj_send_event(display_window, "EV_SETTEXT", jn_text, gobj);
-            if(priv->file_saving_output) {
-                fprintf(priv->file_saving_output, "%s\n", comment);
-            }
-        }
         msg2statusline(gobj, 0, "%s", "");
     }
 
@@ -1723,6 +1714,16 @@ PRIVATE int display_webix_result(
         gobj_send_event(display_window, "EV_SETTEXT", jn_text, gobj);
         if(priv->file_saving_output) {
             fprintf(priv->file_saving_output, "%s\n", data);
+        }
+    }
+
+    if(!empty_string(comment)) {
+        json_t *jn_text = json_pack("{s:s}",
+            "text", comment
+        );
+        gobj_send_event(display_window, "EV_SETTEXT", jn_text, gobj);
+        if(priv->file_saving_output) {
+            fprintf(priv->file_saving_output, "%s\n", comment);
         }
     }
 
