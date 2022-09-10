@@ -1646,6 +1646,7 @@ PRIVATE int display_webix_result(
         if(priv->file_saving_output) {
             fprintf(priv->file_saving_output, "ERROR %d: %s\n", result, comment);
         }
+        comment = 0; // Avoid re-display below
     } else {
         msg2statusline(gobj, 0, "%s", "");
     }
