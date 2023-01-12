@@ -74,6 +74,8 @@
 #define MKEY_ALT_DOWN           {0x1B, 0x5B, 0x31, 0x3B, 0x33, 0x42} // .[1;3B
 #define MKEY_CTRL_DOWN          {0x1B, 0x5B, 0x31, 0x3B, 0x35, 0x42} // .[1;5B
 
+#define MKEY_CTRLALT_UP         {0x1B, 0x5B, 0x31, 0x3B, 0x37, 0x41} // .[1;7A
+#define MKEY_CTRLALT_DOWN       {0x1B, 0x5B, 0x31, 0x3B, 0x37, 0x42} // .[1;7B
 
 /***************************************************************************
  *              Structures
@@ -143,13 +145,13 @@ keytable_t keytable2[] = {
 {"editline",    "EV_EDITLINE_ENTER",            ENTER},
 {"editline",    "EV_EDITLINE_PREV_HIST",        MKEY_UP},
 {"editline",    "EV_EDITLINE_PREV_HIST",        MKEY_UP2},
-{"editline",    "EV_EDITLINE_PREV_HIST",        MKEY_ALT_UP},
-{"editline",    "EV_EDITLINE_PREV_HIST",        MKEY_CTRL_UP},
+//{"editline",    "EV_EDITLINE_PREV_HIST",        MKEY_ALT_UP},
+//{"editline",    "EV_EDITLINE_PREV_HIST",        MKEY_CTRL_UP},
 
 {"editline",    "EV_EDITLINE_NEXT_HIST",        MKEY_DOWN},
 {"editline",    "EV_EDITLINE_NEXT_HIST",        MKEY_DOWN2},
-{"editline",    "EV_EDITLINE_NEXT_HIST",        MKEY_ALT_DOWN},
-{"editline",    "EV_EDITLINE_NEXT_HIST",        MKEY_CTRL_DOWN},
+//{"editline",    "EV_EDITLINE_NEXT_HIST",        MKEY_ALT_DOWN},
+//{"editline",    "EV_EDITLINE_NEXT_HIST",        MKEY_CTRL_DOWN},
 
 {"editline",    "EV_EDITLINE_SWAP_CHAR",        CTRL_T},
 {"editline",    "EV_EDITLINE_DEL_LINE",         CTRL_U},
@@ -163,6 +165,13 @@ keytable_t keytable2[] = {
 {"__top_display_window__",    "EV_SCROLL_LINE_DOWN",          MKEY_ALT_NEXT_PAGE},
 {"__top_display_window__",    "EV_SCROLL_TOP",                MKEY_CTRL_START},
 {"__top_display_window__",    "EV_SCROLL_BOTTOM",             MKEY_CTRL_END},
+
+{"__top_display_window__",    "EV_SCROLL_PAGE_UP",            MKEY_CTRL_UP},
+{"__top_display_window__",    "EV_SCROLL_PAGE_DOWN",          MKEY_CTRL_DOWN},
+{"__top_display_window__",    "EV_SCROLL_LINE_UP",            MKEY_ALT_UP},
+{"__top_display_window__",    "EV_SCROLL_LINE_DOWN",          MKEY_ALT_DOWN},
+{"__top_display_window__",    "EV_SCROLL_TOP",                MKEY_CTRLALT_UP},
+{"__top_display_window__",    "EV_SCROLL_BOTTOM",             MKEY_CTRLALT_DOWN},
 
 {0}
 };
@@ -269,12 +278,12 @@ SDATACM (ASN_OCTET_STR, "", 0,  0,  0,  "Previous Window        -> Alt+Left, Ctr
 SDATACM (ASN_OCTET_STR, "", 0,  0,  0,  "Next Window            -> Alt+Right, Ctrl+n"),
 SDATACM (ASN_OCTET_STR, "", 0,  0,  0,  "Scroll Bottom          -> Ctrl+End"),
 SDATACM (ASN_OCTET_STR, "", 0,  0,  0,  "Clear Screen           -> Ctrl+k"),
-SDATACM (ASN_OCTET_STR, "", 0,  0,  0,  "Scroll Line up         -> Ctrl+Prev.Page"),
-SDATACM (ASN_OCTET_STR, "", 0,  0,  0,  "Scroll Line down       -> Ctrl+Next.Page"),
-SDATACM (ASN_OCTET_STR, "", 0,  0,  0,  "Scroll Page up         -> Prev.Page"),
-SDATACM (ASN_OCTET_STR, "", 0,  0,  0,  "Scroll Page down       -> Next.Page"),
-SDATACM (ASN_OCTET_STR, "", 0,  0,  0,  "Scroll Top             -> Ctrl+Home"),
-SDATACM (ASN_OCTET_STR, "", 0,  0,  0,  "Scroll Bottom          -> Ctrl+End"),
+SDATACM (ASN_OCTET_STR, "", 0,  0,  0,  "Scroll Line up         -> Ctrl+Prev.Page, Alt+Up"),
+SDATACM (ASN_OCTET_STR, "", 0,  0,  0,  "Scroll Line down       -> Ctrl+Next.Page, Alt+Down"),
+SDATACM (ASN_OCTET_STR, "", 0,  0,  0,  "Scroll Page up         -> Prev.Page, Ctrl+Up"),
+SDATACM (ASN_OCTET_STR, "", 0,  0,  0,  "Scroll Page down       -> Next.Page, Ctrl+Down"),
+SDATACM (ASN_OCTET_STR, "", 0,  0,  0,  "Scroll Top             -> Ctrl+Home, Ctrl+Alt+Up"),
+SDATACM (ASN_OCTET_STR, "", 0,  0,  0,  "Scroll Bottom          -> Ctrl+End, Ctrl+Alt+Down"),
 
 SDATACM (ASN_SCHEMA,    "",                 0,                  0,          0,          "\nConsole commands\n----------------"),
 SDATACM (ASN_SCHEMA,    "help",             a_help,             pm_help,    cmd_help,   "Command's help"),
@@ -1872,7 +1881,7 @@ PRIVATE void on_read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
         return;
     }
     if(nread > 8) {
-        // It's must be the mouse cursor
+        // It must be the mouse cursor
         char *p = strchr(buf->base+1, 0x1B);
         if(p) {
             *p = 0;
