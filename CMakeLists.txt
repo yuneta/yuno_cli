@@ -1,8 +1,8 @@
 ##############################################
 #   CMake
 ##############################################
-project(yuneta_cli C)
 cmake_minimum_required(VERSION 3.0)
+project(yuneta_cli C)
 include(CheckIncludeFiles)
 include(CheckSymbolExists)
 
