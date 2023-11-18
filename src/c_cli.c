@@ -246,7 +246,7 @@ PRIVATE sdata_desc_t pm_authenticate[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
 SDATAPM (ASN_OCTET_STR, "auth_system",  0,              "",         "OpenID System(interactive jwt)"),
 SDATAPM (ASN_OCTET_STR, "auth_url",     0,              "",         "OpenID Endpoint (interactive jwt)"),
-SDATAPM (ASN_OCTET_STR, "realm_role",   0,              "",         "Realm role (used for Authorized Party, 'azp' field of jwt, client_id in keycloak)"),
+SDATAPM (ASN_OCTET_STR, "azp",          0,              "",         "azp (OAuth2 Authorized Party)"),
 SDATAPM (ASN_OCTET_STR, "user_id",      0,              "",         "OAuth2 User Id (interactive jwt)"),
 SDATAPM (ASN_OCTET_STR, "user_passw",   0,              "",         "OAuth2 User password (interactive jwt)"),
 SDATA_END()
@@ -1153,7 +1153,7 @@ PRIVATE json_t *cmd_do_authenticate_task(hgobj gobj, const char *cmd, json_t *kw
     const char *auth_url = kw_get_str(kw, "auth_url", "", 0);
     const char *user_id = kw_get_str(kw, "user_id", "", 0);
     const char *user_passw = kw_get_str(kw, "user_passw", "", 0);
-    const char *azp = kw_get_str(kw, "realm_role", "", 0);   // Our realm is the Authorized Party in jwt
+    const char *azp = kw_get_str(kw, "azp", "", 0);
 
     if(empty_string(auth_url)) {
         return msg_iev_build_webix(
@@ -1169,7 +1169,7 @@ PRIVATE json_t *cmd_do_authenticate_task(hgobj gobj, const char *cmd, json_t *kw
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_sprintf("What realm_role? ('azp' Oauth2 Authorized Party, client_id in keycloak)"),
+            json_sprintf("What 'azp'? (Oauth2 Authorized Party, client_id in keycloak)"),
             0,
             0,
             kw
