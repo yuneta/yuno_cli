@@ -244,9 +244,8 @@ SDATA_END()
 };
 PRIVATE sdata_desc_t pm_authenticate[] = {
 /*-PM----type-----------name------------flag------------default-----description---------- */
-SDATAPM (ASN_OCTET_STR, "auth_system",  0,              "",         "OAuth2 System (interactive jwt)"),
-SDATAPM (ASN_OCTET_STR, "auth_url",     0,              "",         "OAuth2 Server Url (interactive jwt)"),
-SDATAPM (ASN_OCTET_STR, "auth_owner",   0,              "",         "OAuth2 Owner (interactive jwt)"),
+SDATAPM (ASN_OCTET_STR, "auth_system",  0,              "",         "OpenID System(interactive jwt)"),
+SDATAPM (ASN_OCTET_STR, "auth_url",     0,              "",         "OpenID Endpoint (interactive jwt)"),
 SDATAPM (ASN_OCTET_STR, "realm_role",   0,              "",         "Realm role (used for Authorized Party, 'azp' field of jwt, client_id in keycloak)"),
 SDATAPM (ASN_OCTET_STR, "user_id",      0,              "",         "OAuth2 User Id (interactive jwt)"),
 SDATAPM (ASN_OCTET_STR, "user_passw",   0,              "",         "OAuth2 User password (interactive jwt)"),
@@ -1152,7 +1151,6 @@ PRIVATE json_t *cmd_do_authenticate_task(hgobj gobj, const char *cmd, json_t *kw
      *-----------------------------*/
     const char *auth_system = kw_get_str(kw, "auth_system", "", 0); // "keycloak" by default
     const char *auth_url = kw_get_str(kw, "auth_url", "", 0);
-    const char *auth_owner = kw_get_str(kw, "auth_owner", "", 0);
     const char *user_id = kw_get_str(kw, "user_id", "", 0);
     const char *user_passw = kw_get_str(kw, "user_passw", "", 0);
     const char *azp = kw_get_str(kw, "realm_role", "", 0);   // Our realm is the Authorized Party in jwt
@@ -1161,17 +1159,7 @@ PRIVATE json_t *cmd_do_authenticate_task(hgobj gobj, const char *cmd, json_t *kw
         return msg_iev_build_webix(
             gobj,
             -1,
-            json_sprintf("What auth_url? (OAuth2 Server Url)"),
-            0,
-            0,
-            kw
-        );
-    }
-    if(empty_string(auth_owner)) {
-        return msg_iev_build_webix(
-            gobj,
-            -1,
-            json_sprintf("What auth_owner? (OAuth2 Owner)"),
+            json_sprintf("What auth_url? (OpenID Endpoint)"),
             0,
             0,
             kw
@@ -1213,10 +1201,9 @@ PRIVATE json_t *cmd_do_authenticate_task(hgobj gobj, const char *cmd, json_t *kw
      *-----------------------------*/
     hgobj gobj_task = gobj_find_unique_gobj("task-authenticate", FALSE);
     if(!gobj_task) {
-        json_t *kw_task = json_pack("{s:s, s:s, s:s, s:s, s:s, s:s}",
+        json_t *kw_task = json_pack("{s:s, s:s, s:s, s:s, s:s}",
             "auth_system", auth_system,
             "auth_url", auth_url,
-            "auth_owner", auth_owner,
             "user_id", user_id,
             "user_passw", user_passw,
             "azp", azp
@@ -1225,7 +1212,6 @@ PRIVATE json_t *cmd_do_authenticate_task(hgobj gobj, const char *cmd, json_t *kw
     } else {
         gobj_write_str_attr(gobj_task, "auth_system", auth_system);
         gobj_write_str_attr(gobj_task, "auth_url", auth_url);
-        gobj_write_str_attr(gobj_task, "auth_owner", auth_owner);
         gobj_write_str_attr(gobj_task, "user_id", user_id);
         gobj_write_str_attr(gobj_task, "user_passw", user_passw);
         gobj_write_str_attr(gobj_task, "azp", azp);
