@@ -87,7 +87,6 @@ TARGET_LINK_LIBRARIES(yuneta
     /yuneta/development/output/lib/libjansson.a
     /yuneta/development/output/lib/libunwind.a
     /yuneta/development/output/lib/libpcre2-8.a
-    /yuneta/development/output/lib/libcurl.a  # used by liboauth2
     /yuneta/development/output/lib/libpanel.a
     /yuneta/development/output/lib/libncurses.a
     /yuneta/development/output/lib/libssl.a
