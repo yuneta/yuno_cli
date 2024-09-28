@@ -2299,7 +2299,7 @@ PRIVATE GBUFFER *replace_cli_vars_for_yunetas(hgobj gobj, const char *command, c
         *n = 0;
         gbuf_append(gbuf, p, strlen(p));
 
-        n += 2;
+        n += 1;
         if(*n == '(') {
             f = strchr(n, ')');
         } else {
