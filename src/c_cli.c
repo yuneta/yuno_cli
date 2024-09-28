@@ -2134,11 +2134,26 @@ PRIVATE int edit_json(hgobj gobj, const char *path)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE GBUFFER *source2base64(const char *source, char **comment)
+PRIVATE const char *get_yunetas_base(void)
+{
+    // Define the default value
+    const char* default_value = "/yuneta/development/outputs/yunos";
+
+    // Get the value of the environment variable YUNETAS_BASE
+    const char* yunetas_base = getenv("YUNETAS_BASE");
+
+    // Return the environment variable value if it's set, otherwise the default value
+    return yunetas_base ? yunetas_base : default_value;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE GBUFFER *source2base64_for_yuneta(const char *source, char **comment)
 {
     /*------------------------------------------------*
      *          Check source
-     *  Frequently, You want install install the output
+     *  Frequently, You want install the output
      *  of your yuno's make install command.
      *------------------------------------------------*/
     if(empty_string(source)) {
@@ -2169,9 +2184,48 @@ PRIVATE GBUFFER *source2base64(const char *source, char **comment)
 }
 
 /***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE GBUFFER *source2base64_for_yunetas(const char *source, char **comment)
+{
+    /*------------------------------------------------*
+     *          Check source
+     *  Frequently, You want install the output
+     *  of your yuno's make install command.
+     *------------------------------------------------*/
+    if(empty_string(source)) {
+        *comment = "source not found";
+        return 0;
+    }
+
+    char path[NAME_MAX];
+    if(access(source, 0)==0 && is_regular_file(source)) {
+        snprintf(path, sizeof(path), "%s", source);
+    } else {
+        const char *yunetas_base = get_yunetas_base();
+        build_path2(path, sizeof(path), yunetas_base, source);
+    }
+
+    if(access(path, 0)!=0) {
+        *comment = "source not found";
+        return 0;
+    }
+    if(!is_regular_file(path)) {
+        *comment = "source is not a regular file";
+        return 0;
+    }
+    GBUFFER *gbuf_b64 = gbuf_file2base64(path);
+    if(!gbuf_b64) {
+        *comment = "conversion to base64 failed";
+    }
+    return gbuf_b64;
+}
+
+/***************************************************************************
+ *  Used in yuneta classic
  *  $$ interfere with bash, use ^^ as alternative
  ***************************************************************************/
-PRIVATE GBUFFER * replace_cli_vars(hgobj gobj, const char *command, char **comment)
+PRIVATE GBUFFER * replace_cli_vars_for_yuneta(hgobj gobj, const char *command, char **comment)
 {
     GBUFFER *gbuf = gbuf_create(4*1024, gbmem_get_maximum_block(), 0, 0);
     char *command_ = gbmem_strdup(command);
@@ -2207,7 +2261,65 @@ PRIVATE GBUFFER * replace_cli_vars(hgobj gobj, const char *command, char **comme
         *f = 0;
         f++;
 
-        GBUFFER *gbuf_b64 = source2base64(n, comment);
+        GBUFFER *gbuf_b64 = source2base64_for_yuneta(n, comment);
+        if(!gbuf_b64) {
+            gbuf_decref(gbuf);
+            gbmem_free(command_);
+            return 0;
+        }
+
+        gbuf_append(gbuf, "'", 1);
+        gbuf_append_gbuf(gbuf, gbuf_b64);
+        gbuf_append(gbuf, "'", 1);
+        gbuf_decref(gbuf_b64);
+
+        p = f;
+    }
+    if(!empty_string(p)) {
+        gbuf_append(gbuf, p, strlen(p));
+    }
+
+    gbmem_free(command_);
+    return gbuf;
+}
+
+/***************************************************************************
+ *  Used in yuneta simplified
+ ***************************************************************************/
+PRIVATE GBUFFER *replace_cli_vars_for_yunetas(hgobj gobj, const char *command, char **comment)
+{
+    GBUFFER *gbuf = gbuf_create(4*1024, gbmem_get_maximum_block(), 0, 0);
+    char *command_ = gbmem_strdup(command);
+    char *p = command_;
+
+    const char *prefix = "$";  // default
+
+    char *n, *f;
+    while((n=strstr(p, prefix))) {
+        *n = 0;
+        gbuf_append(gbuf, p, strlen(p));
+
+        n += 2;
+        if(*n == '(') {
+            f = strchr(n, ')');
+        } else {
+            gbuf_decref(gbuf);
+            gbmem_free(command_);
+            *comment = "Bad format of $: use $(...)";
+            return 0;
+        }
+        if(!f) {
+            gbuf_decref(gbuf);
+            gbmem_free(command_);
+            *comment = "Bad format of $: use $(...)";
+            return 0;
+        }
+        *n = 0;
+        n++;
+        *f = 0;
+        f++;
+
+        GBUFFER *gbuf_b64 = source2base64_for_yunetas(n, comment);
         if(!gbuf_b64) {
             gbuf_decref(gbuf);
             gbmem_free(command_);
@@ -2331,7 +2443,13 @@ PRIVATE int ac_command(hgobj gobj, const char *event, json_t *kw, hgobj src)
         );
 
         char *comment;
-        GBUFFER *gbuf_parsed_command = replace_cli_vars(gobj, command, &comment);
+        GBUFFER *gbuf_parsed_command;
+        if(strstr(command, "$$") || strstr(command, "^^")) {
+            gbuf_parsed_command = replace_cli_vars_for_yuneta(gobj, command, &comment);
+        } else {
+            gbuf_parsed_command = replace_cli_vars_for_yunetas(gobj, command, &comment);
+        }
+
         if(!gbuf_parsed_command) {
             display_webix_result(
                 gobj,
