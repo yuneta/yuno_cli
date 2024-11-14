@@ -1550,7 +1550,7 @@ PRIVATE GBUFFER *jsontable2str(json_t *jn_schema, json_t *jn_data)
      */
     json_array_foreach(jn_schema, col, jn_col) {
         const char *header = kw_get_str(jn_col, "header", "", 0);
-        int fillspace = kw_get_int(jn_col, "fillspace", 10, 0);
+        int fillspace = (int)kw_get_int(jn_col, "fillspace", 10, KW_WILD_NUMBER);
         if(fillspace && fillspace < strlen(header)) {
             fillspace = strlen(header);
         }
@@ -1565,7 +1565,7 @@ PRIVATE GBUFFER *jsontable2str(json_t *jn_schema, json_t *jn_data)
      */
     json_array_foreach(jn_schema, col, jn_col) {
         const char *header = kw_get_str(jn_col, "header", "", 0);
-        int fillspace = kw_get_int(jn_col, "fillspace", 10, 0);
+        int fillspace = (int)kw_get_int(jn_col, "fillspace", 10, KW_WILD_NUMBER);
         if(fillspace && fillspace < strlen(header)) {
             fillspace = strlen(header);
         }
