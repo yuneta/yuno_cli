@@ -1588,14 +1588,21 @@ PRIVATE GBUFFER *jsontable2str(json_t *jn_schema, json_t *jn_data)
     json_array_foreach(jn_data, row, jn_row) {
         json_array_foreach(jn_schema, col, jn_col) {
             const char *id = kw_get_str(jn_col, "id", 0, 0);
-            int fillspace = (int)kw_get_int(jn_col, "fillspace", 10, KW_WILD_NUMBER);
+            int fillspace = (int)kw_get_int(jn_col, "fillspace", 20, KW_WILD_NUMBER);
             const char *header = kw_get_str(jn_col, "header", "", 0);
+            const char *type = kw_get_str(jn_col, "type", "", 0);
             if(fillspace && fillspace < strlen(header)) {
-                fillspace = strlen(header);
+                fillspace = (int)strlen(header);
             }
             if(fillspace > 0) {
                 json_t *jn_cell = kw_get_dict_value(jn_row, id, 0, 0);
                 char *text = json2uglystr(jn_cell);
+                if(strcmp(type, "time")==0) {
+                    char stime[90];
+                    t2timestamp(stime, sizeof(stime), json_integer_value(jn_cell), TRUE);
+                    text = stime;
+                }
+
                 if(json_is_number(jn_cell) || json_is_boolean(jn_cell)) {
                     //gbuf_printf(gbuf, "%*s ", fillspace, text);
                     gbuf_printf(gbuf, "%-*.*s ", fillspace, fillspace, text);
