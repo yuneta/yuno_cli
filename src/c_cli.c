@@ -1598,11 +1598,11 @@ PRIVATE GBUFFER *jsontable2str(json_t *jn_schema, json_t *jn_data)
                 json_t *jn_cell = kw_get_dict_value(jn_row, id, 0, 0);
                 char *text = json2uglystr(jn_cell);
                 if(strcmp(type, "time")==0) {
+                    GBMEM_FREE(text);
                     char stime[90];
                     t2timestamp(stime, sizeof(stime), json_integer_value(jn_cell), TRUE);
                     text = stime;
                     gbuf_printf(gbuf, "%-*.*s ", fillspace, fillspace, text);
-                    GBMEM_FREE(text);
                     continue;
                 }
 
