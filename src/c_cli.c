@@ -1601,6 +1601,9 @@ PRIVATE GBUFFER *jsontable2str(json_t *jn_schema, json_t *jn_data)
                     char stime[90];
                     t2timestamp(stime, sizeof(stime), json_integer_value(jn_cell), TRUE);
                     text = stime;
+                    gbuf_printf(gbuf, "%-*.*s ", fillspace, fillspace, text);
+                    GBMEM_FREE(text);
+                    continue;
                 }
 
                 if(json_is_number(jn_cell) || json_is_boolean(jn_cell)) {
