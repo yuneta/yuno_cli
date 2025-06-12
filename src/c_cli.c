@@ -1635,6 +1635,9 @@ PRIVATE int display_webix_result(
     const char *comment = kw_get_str(webix, "comment", "", 0);
     json_t *jn_schema = kw_get_dict_value(webix, "schema", 0, 0);
     json_t *jn_data = kw_get_dict_value(webix, "data", 0, 0);
+    if(!jn_data) {
+        jn_data = webix;
+    }
 
     const char *display_mode = gobj_read_str_attr(gobj, "display_mode");
     json_t *jn_display_mode = kw_get_subdict_value(webix, "__md_iev__", "display_mode", 0, 0);
