@@ -1637,6 +1637,9 @@ PRIVATE int display_webix_result(
     json_t *jn_data = kw_get_dict_value(webix, "data", 0, 0);
     if(!jn_data) {
         jn_data = webix;
+        if(empty_string(comment)) {
+            comment = "Not a webix response";
+        }
     }
 
     const char *display_mode = gobj_read_str_attr(gobj, "display_mode");
